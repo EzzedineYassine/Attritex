@@ -1,0 +1,505 @@
+{
+  "artifact_schema_version": 1,
+  "model_version": "20261029.001305-logistic_regression-16320c9c",
+  "created_at": "2026-10-29T00:13:05+00:00",
+  "model": {
+    "name": "logistic_regression",
+    "label": "Logistic regression",
+    "role": "baseline",
+    "complexity": 1,
+    "eligible_for_selection": true,
+    "description": "Regularised linear model on standardised numeric and one-hot categorical features."
+  },
+  "selection": {
+    "metric": "pr_auc",
+    "best_candidate": "random_forest",
+    "best_cv_mean": 0.6630351686552125,
+    "best_cv_standard_error": 0.009590579428857104,
+    "acceptance_floor": 0.6534445892263554,
+    "candidates_within_one_se": [
+      "logistic_regression",
+      "hist_gradient_boosting",
+      "random_forest"
+    ],
+    "selected": "logistic_regression",
+    "explanation": "Logistic regression was selected because it is the simplest eligible model whose mean cross-validated PR-AUC is within one standard error of the best (Random forest, 0.663 \u00b1 0.010)."
+  },
+  "features": {
+    "model_inputs": [
+      "SeniorCitizen",
+      "Partner",
+      "Dependents",
+      "tenure",
+      "Contract",
+      "PaperlessBilling",
+      "PaymentMethod",
+      "PhoneService",
+      "MultipleLines",
+      "InternetService",
+      "OnlineSecurity",
+      "OnlineBackup",
+      "DeviceProtection",
+      "TechSupport",
+      "StreamingTV",
+      "StreamingMovies",
+      "MonthlyCharges",
+      "TotalCharges"
+    ],
+    "specs": [
+      {
+        "name": "SeniorCitizen",
+        "kind": "categorical",
+        "label": "Senior citizen",
+        "group": "Profile",
+        "description": "Whether the customer is 65 or older.",
+        "allowed_values": [
+          "No",
+          "Yes"
+        ],
+        "minimum": null,
+        "maximum": null,
+        "unit": null,
+        "nullable": false,
+        "integer": false
+      },
+      {
+        "name": "Partner",
+        "kind": "categorical",
+        "label": "Has partner",
+        "group": "Profile",
+        "description": "Whether the customer has a partner.",
+        "allowed_values": [
+          "No",
+          "Yes"
+        ],
+        "minimum": null,
+        "maximum": null,
+        "unit": null,
+        "nullable": false,
+        "integer": false
+      },
+      {
+        "name": "Dependents",
+        "kind": "categorical",
+        "label": "Has dependents",
+        "group": "Profile",
+        "description": "Whether the customer has dependents.",
+        "allowed_values": [
+          "No",
+          "Yes"
+        ],
+        "minimum": null,
+        "maximum": null,
+        "unit": null,
+        "nullable": false,
+        "integer": false
+      },
+      {
+        "name": "tenure",
+        "kind": "numeric",
+        "label": "Tenure",
+        "group": "Account",
+        "description": "Number of months the customer has been with the company.",
+        "allowed_values": [],
+        "minimum": 0,
+        "maximum": 120,
+        "unit": "months",
+        "nullable": false,
+        "integer": true
+      },
+      {
+        "name": "Contract",
+        "kind": "categorical",
+        "label": "Contract",
+        "group": "Account",
+        "description": "Current contract term.",
+        "allowed_values": [
+          "Month-to-month",
+          "One year",
+          "Two year"
+        ],
+        "minimum": null,
+        "maximum": null,
+        "unit": null,
+        "nullable": false,
+        "integer": false
+      },
+      {
+        "name": "PaperlessBilling",
+        "kind": "categorical",
+        "label": "Paperless billing",
+        "group": "Account",
+        "description": "Whether the customer receives paperless bills.",
+        "allowed_values": [
+          "No",
+          "Yes"
+        ],
+        "minimum": null,
+        "maximum": null,
+        "unit": null,
+        "nullable": false,
+        "integer": false
+      },
+      {
+        "name": "PaymentMethod",
+        "kind": "categorical",
+        "label": "Payment method",
+        "group": "Account",
+        "description": "How the customer pays.",
+        "allowed_values": [
+          "Electronic check",
+          "Mailed check",
+          "Bank transfer (automatic)",
+          "Credit card (automatic)"
+        ],
+        "minimum": null,
+        "maximum": null,
+        "unit": null,
+        "nullable": false,
+        "integer": false
+      },
+      {
+        "name": "PhoneService",
+        "kind": "categorical",
+        "label": "Phone service",
+        "group": "Services",
+        "description": "Whether the customer has phone service.",
+        "allowed_values": [
+          "No",
+          "Yes"
+        ],
+        "minimum": null,
+        "maximum": null,
+        "unit": null,
+        "nullable": false,
+        "integer": false
+      },
+      {
+        "name": "MultipleLines",
+        "kind": "categorical",
+        "label": "Multiple lines",
+        "group": "Services",
+        "description": "Whether the customer has multiple phone lines.",
+        "allowed_values": [
+          "No",
+          "Yes",
+          "No phone service"
+        ],
+        "minimum": null,
+        "maximum": null,
+        "unit": null,
+        "nullable": false,
+        "integer": false
+      },
+      {
+        "name": "InternetService",
+        "kind": "categorical",
+        "label": "Internet service",
+        "group": "Services",
+        "description": "Internet service type.",
+        "allowed_values": [
+          "DSL",
+          "Fiber optic",
+          "No"
+        ],
+        "minimum": null,
+        "maximum": null,
+        "unit": null,
+        "nullable": false,
+        "integer": false
+      },
+      {
+        "name": "OnlineSecurity",
+        "kind": "categorical",
+        "label": "Online security",
+        "group": "Services",
+        "description": "Online security add-on.",
+        "allowed_values": [
+          "No",
+          "Yes",
+          "No internet service"
+        ],
+        "minimum": null,
+        "maximum": null,
+        "unit": null,
+        "nullable": false,
+        "integer": false
+      },
+      {
+        "name": "OnlineBackup",
+        "kind": "categorical",
+        "label": "Online backup",
+        "group": "Services",
+        "description": "Online backup add-on.",
+        "allowed_values": [
+          "No",
+          "Yes",
+          "No internet service"
+        ],
+        "minimum": null,
+        "maximum": null,
+        "unit": null,
+        "nullable": false,
+        "integer": false
+      },
+      {
+        "name": "DeviceProtection",
+        "kind": "categorical",
+        "label": "Device protection",
+        "group": "Services",
+        "description": "Device protection add-on.",
+        "allowed_values": [
+          "No",
+          "Yes",
+          "No internet service"
+        ],
+        "minimum": null,
+        "maximum": null,
+        "unit": null,
+        "nullable": false,
+        "integer": false
+      },
+      {
+        "name": "TechSupport",
+        "kind": "categorical",
+        "label": "Tech support",
+        "group": "Services",
+        "description": "Premium technical support add-on.",
+        "allowed_values": [
+          "No",
+          "Yes",
+          "No internet service"
+        ],
+        "minimum": null,
+        "maximum": null,
+        "unit": null,
+        "nullable": false,
+        "integer": false
+      },
+      {
+        "name": "StreamingTV",
+        "kind": "categorical",
+        "label": "Streaming TV",
+        "group": "Services",
+        "description": "Streaming TV add-on.",
+        "allowed_values": [
+          "No",
+          "Yes",
+          "No internet service"
+        ],
+        "minimum": null,
+        "maximum": null,
+        "unit": null,
+        "nullable": false,
+        "integer": false
+      },
+      {
+        "name": "StreamingMovies",
+        "kind": "categorical",
+        "label": "Streaming movies",
+        "group": "Services",
+        "description": "Streaming movies add-on.",
+        "allowed_values": [
+          "No",
+          "Yes",
+          "No internet service"
+        ],
+        "minimum": null,
+        "maximum": null,
+        "unit": null,
+        "nullable": false,
+        "integer": false
+      },
+      {
+        "name": "MonthlyCharges",
+        "kind": "numeric",
+        "label": "Monthly charges",
+        "group": "Billing",
+        "description": "Amount currently charged per month.",
+        "allowed_values": [],
+        "minimum": 0,
+        "maximum": 1000,
+        "unit": "USD",
+        "nullable": false,
+        "integer": false
+      },
+      {
+        "name": "TotalCharges",
+        "kind": "numeric",
+        "label": "Total charges",
+        "group": "Billing",
+        "description": "Total amount charged to date. Blank for customers in their first billing cycle.",
+        "allowed_values": [],
+        "minimum": 0,
+        "maximum": 100000,
+        "unit": "USD",
+        "nullable": true,
+        "integer": false
+      }
+    ],
+    "excluded": [
+      {
+        "name": "gender",
+        "reason": "Protected attribute excluded from modelling by policy."
+      }
+    ],
+    "encoded": [
+      "tenure",
+      "MonthlyCharges",
+      "TotalCharges",
+      "SeniorCitizen_No",
+      "SeniorCitizen_Yes",
+      "Partner_No",
+      "Partner_Yes",
+      "Dependents_No",
+      "Dependents_Yes",
+      "Contract_Month-to-month",
+      "Contract_One year",
+      "Contract_Two year",
+      "PaperlessBilling_No",
+      "PaperlessBilling_Yes",
+      "PaymentMethod_Bank transfer (automatic)",
+      "PaymentMethod_Credit card (automatic)",
+      "PaymentMethod_Electronic check",
+      "PaymentMethod_Mailed check",
+      "PhoneService_No",
+      "PhoneService_Yes",
+      "MultipleLines_No",
+      "MultipleLines_No phone service",
+      "MultipleLines_Yes",
+      "InternetService_DSL",
+      "InternetService_Fiber optic",
+      "InternetService_No",
+      "OnlineSecurity_No",
+      "OnlineSecurity_No internet service",
+      "OnlineSecurity_Yes",
+      "OnlineBackup_No",
+      "OnlineBackup_No internet service",
+      "OnlineBackup_Yes",
+      "DeviceProtection_No",
+      "DeviceProtection_No internet service",
+      "DeviceProtection_Yes",
+      "TechSupport_No",
+      "TechSupport_No internet service",
+      "TechSupport_Yes",
+      "StreamingTV_No",
+      "StreamingTV_No internet service",
+      "StreamingTV_Yes",
+      "StreamingMovies_No",
+      "StreamingMovies_No internet service",
+      "StreamingMovies_Yes"
+    ]
+  },
+  "training_config": {
+    "seed": 42,
+    "test_size": 0.2,
+    "cv_folds": 5,
+    "medium_recall_target": 0.9,
+    "permutation_repeats": 10,
+    "bootstrap_samples": 1000,
+    "max_invalid_fraction": 0.02,
+    "selection_metric": "pr_auc",
+    "selection_rule": "one_standard_error"
+  },
+  "dataset": {
+    "provenance": {
+      "name": "IBM Telco Customer Churn",
+      "source_url": "https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv",
+      "repository": "https://github.com/IBM/telco-customer-churn-on-icp4d",
+      "license": "Apache-2.0",
+      "sha256": "16320c9c1ec72448db59aa0a26a0b95401046bef5d02fd3aeb906448e3055e91",
+      "rows": 7043,
+      "retrieved_at": "2026-10-29T00:12:36.956133+00:00",
+      "synthetic": false,
+      "notes": ""
+    },
+    "quality": {
+      "input_rows": 7043,
+      "invalid_rows_dropped": 0,
+      "duplicate_ids_dropped": 0,
+      "modelled_rows": 7043,
+      "churned": 1869,
+      "retained": 5174,
+      "churn_rate": 0.2653698707936959,
+      "missing_values_imputed": {
+        "TotalCharges": 11
+      },
+      "validation_issue_examples": []
+    },
+    "split": {
+      "strategy": "stratified holdout",
+      "train_rows": 5634,
+      "test_rows": 1409,
+      "train_churn_rate": 0.2653532126375577,
+      "test_churn_rate": 0.2654364797728886
+    }
+  },
+  "risk_tiers": {
+    "cutoffs": {
+      "medium": 0.1689,
+      "high": 0.3262,
+      "medium_recall_target": 0.9
+    },
+    "derivation": "Cutoffs are derived from out-of-fold predictions on the training split only. High risk starts at the F1-optimal threshold (the decision threshold). Medium risk starts at the highest threshold that still recalls 90% of churners.",
+    "holdout_summary": [
+      {
+        "tier": "high",
+        "customers": 502,
+        "share_of_customers": 0.35628105039034774,
+        "observed_churn_rate": 0.5398406374501992,
+        "share_of_churners": 0.7245989304812834
+      },
+      {
+        "tier": "medium",
+        "customers": 248,
+        "share_of_customers": 0.1760113555713272,
+        "observed_churn_rate": 0.2620967741935484,
+        "share_of_churners": 0.17379679144385027
+      },
+      {
+        "tier": "low",
+        "customers": 659,
+        "share_of_customers": 0.46770759403832507,
+        "observed_churn_rate": 0.057663125948406675,
+        "share_of_churners": 0.10160427807486631
+      }
+    ]
+  },
+  "headline_metrics": {
+    "roc_auc": 0.8421478209201995,
+    "pr_auc": 0.634229869975365,
+    "brier": 0.13800119590840365,
+    "precision": 0.5398406374501992,
+    "recall": 0.7245989304812834,
+    "f1": 0.6187214611872146,
+    "decision_threshold": 0.3262,
+    "evaluated_on": "holdout test split"
+  },
+  "reference_profile": {
+    "SeniorCitizen": "No",
+    "Partner": "No",
+    "Dependents": "No",
+    "tenure": 29,
+    "Contract": "Month-to-month",
+    "PaperlessBilling": "Yes",
+    "PaymentMethod": "Electronic check",
+    "PhoneService": "Yes",
+    "MultipleLines": "No",
+    "InternetService": "Fiber optic",
+    "OnlineSecurity": "No",
+    "OnlineBackup": "No",
+    "DeviceProtection": "No",
+    "TechSupport": "No",
+    "StreamingTV": "No",
+    "StreamingMovies": "No",
+    "MonthlyCharges": 70.5,
+    "TotalCharges": 1398.12
+  },
+  "environment": {
+    "churnsense": "1.0.0",
+    "python": "3.11.16",
+    "scikit_learn": "1.9.1",
+    "pandas": "2.3.3",
+    "numpy": "2.4.6"
+  }
+}

@@ -1,0 +1,23 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - CHURNSENSE_DATA_DIR=/app/data
+      - CHURNSENSE_ARTIFACT_DIR=/app/artifacts
+      - CHURNSENSE_CORS_ORIGINS=http://localhost:5173,http://localhost:80,http://localhost:3000
+    volumes:
+      - ./data:/app/data
+      - ./artifacts:/app/artifacts
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
