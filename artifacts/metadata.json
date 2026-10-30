@@ -1,7 +1,7 @@
 {
   "artifact_schema_version": 1,
-  "model_version": "20261029.001305-logistic_regression-16320c9c",
-  "created_at": "2026-10-29T00:13:05+00:00",
+  "model_version": "20261030.165440-logistic_regression-16320c9c",
+  "created_at": "2026-10-30T16:54:40+00:00",
   "model": {
     "name": "logistic_regression",
     "label": "Logistic regression",
@@ -496,7 +496,7 @@
     "TotalCharges": 1398.12
   },
   "environment": {
-    "churnsense": "1.0.0",
+    "attritex": "1.0.0",
     "python": "3.11.16",
     "scikit_learn": "1.9.1",
     "pandas": "2.3.3",

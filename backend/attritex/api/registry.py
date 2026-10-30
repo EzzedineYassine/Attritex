@@ -5,7 +5,7 @@ import threading
 from dataclasses import dataclass
 from pathlib import Path
 
-from churnsense.ml.artifacts import (
+from attritex.ml.artifacts import (
     ArtifactLoadError,
     ArtifactNotFoundError,
     ModelBundle,

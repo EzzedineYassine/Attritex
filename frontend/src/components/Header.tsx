@@ -1,6 +1,7 @@
 import React from 'react'
 import { AlertTriangle, CheckCircle2, ShieldCheck } from 'lucide-react'
 import { HealthStatus, ModelInfo } from '../types'
+import { Logo } from './Logo'
 
 interface HeaderProps {
   activeTab: 'scoring' | 'batch' | 'evaluation' | 'governance'
@@ -22,17 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded bg-ink flex items-center justify-center text-canvas font-bold text-base tracking-tighter">
-                CS
-              </div>
-              <div>
-                <span className="font-semibold text-lg text-ink tracking-tight">ChurnSense</span>
-                <span className="text-xs text-ink-muted hidden sm:inline ml-2 border-l border-border pl-2">
-                  Customer Risk Intelligence
-                </span>
-              </div>
-            </div>
+            <Logo />
 
             <nav className="flex items-center space-x-1 sm:space-x-2">
               <button
@@ -92,6 +83,8 @@ export const Header: React.FC<HeaderProps> = ({
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium border ${
                 isHealthy
                   ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                  : health
+                  ? 'bg-amber-50 text-amber-800 border-amber-200'
                   : 'bg-red-50 text-red-800 border-red-200'
               }`}
             >
@@ -100,10 +93,15 @@ export const Header: React.FC<HeaderProps> = ({
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Model Live</span>
                 </>
+              ) : health ? (
+                <>
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Model Not Loaded</span>
+                </>
               ) : (
                 <>
                   <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
-                  <span>Degraded</span>
+                  <span>Server Offline</span>
                 </>
               )}
             </div>

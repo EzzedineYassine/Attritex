@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
-from churnsense.data.schema import (
+from attritex.data.schema import (
     ID_COLUMN,
     INTERNET_ADDON_FEATURES,
     MODEL_FEATURES,

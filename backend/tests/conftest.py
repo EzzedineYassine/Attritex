@@ -3,11 +3,11 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from churnsense.api.app import create_app
-from churnsense.config import Settings
-from churnsense.data.fixture import generate_synthetic_customers
-from churnsense.ml.artifacts import load_bundle
-from churnsense.ml.training import TrainingConfig, train_from_frame
+from attritex.api.app import create_app
+from attritex.config import Settings
+from attritex.data.fixture import generate_synthetic_customers
+from attritex.ml.artifacts import load_bundle
+from attritex.ml.training import TrainingConfig, train_from_frame
 
 
 @pytest.fixture(scope="session")

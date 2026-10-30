@@ -49,9 +49,9 @@ class Settings:
 
 def load_settings() -> Settings:
     return Settings(
-        data_dir=_path_from_env("CHURNSENSE_DATA_DIR", PROJECT_ROOT / "data"),
-        artifact_dir=_path_from_env("CHURNSENSE_ARTIFACT_DIR", PROJECT_ROOT / "artifacts"),
-        cors_origins=_origins_from_env("CHURNSENSE_CORS_ORIGINS", DEFAULT_CORS_ORIGINS),
-        max_upload_bytes=_positive_int_from_env("CHURNSENSE_MAX_UPLOAD_BYTES", 5 * 1024 * 1024),
-        max_batch_rows=_positive_int_from_env("CHURNSENSE_MAX_BATCH_ROWS", 50_000),
+        data_dir=_path_from_env("ATTRITEX_DATA_DIR", PROJECT_ROOT / "data"),
+        artifact_dir=_path_from_env("ATTRITEX_ARTIFACT_DIR", PROJECT_ROOT / "artifacts"),
+        cors_origins=_origins_from_env("ATTRITEX_CORS_ORIGINS", DEFAULT_CORS_ORIGINS),
+        max_upload_bytes=_positive_int_from_env("ATTRITEX_MAX_UPLOAD_BYTES", 5 * 1024 * 1024),
+        max_batch_rows=_positive_int_from_env("ATTRITEX_MAX_BATCH_ROWS", 50_000),
     )

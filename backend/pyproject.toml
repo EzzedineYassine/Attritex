@@ -1,5 +1,5 @@
 [project]
-name = "churnsense"
+name = "attritex"
 version = "1.0.0"
 description = "Reproducible customer churn prediction pipeline and prediction API"
 requires-python = ">=3.11,<3.14"
@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-churnsense = "churnsense.cli:main"
+attritex = "attritex.cli:main"
 
 [dependency-groups]
 dev = [
@@ -29,7 +29,7 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["churnsense"]
+packages = ["attritex"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

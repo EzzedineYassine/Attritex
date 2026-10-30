@@ -11,8 +11,8 @@ import joblib
 import sklearn
 from sklearn.pipeline import Pipeline
 
-from churnsense.data.schema import model_feature_names
-from churnsense.ml.thresholds import TierCutoffs
+from attritex.data.schema import model_feature_names
+from attritex.ml.thresholds import TierCutoffs
 
 ARTIFACT_SCHEMA_VERSION = 1
 MODEL_FILENAME = "model.joblib"
@@ -99,7 +99,7 @@ def load_bundle(artifact_dir: Path) -> ModelBundle:
     if missing:
         raise ArtifactNotFoundError(
             f"Model artifacts missing in {artifact_dir}: {', '.join(missing)}. "
-            "Train a model with `churnsense train`."
+            "Train a model with `attritex train`."
         )
 
     metadata = _read_json(metadata_path)

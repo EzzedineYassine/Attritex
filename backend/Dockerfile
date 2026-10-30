@@ -13,10 +13,10 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml .
-COPY churnsense ./churnsense
+COPY attritex ./attritex
 
 RUN uv pip install --system -e .
 
 EXPOSE 8000
 
-CMD ["churnsense", "serve", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["attritex", "serve", "--host", "0.0.0.0", "--port", "8000"]

@@ -40,11 +40,19 @@ export interface RiskFactor {
   reference_value: string
   probability_if_reference: number
   effect: number
+  attribution_score?: number | null
+  direction?: 'risk_increasing' | 'risk_reducing' | null
+}
+
+export interface LocalAttribution {
+  top_risk_increasing: RiskFactor[]
+  top_risk_reducing: RiskFactor[]
 }
 
 export interface PredictionResult {
   customer_id: string | null
   churn_probability: number
+  expected_revenue_at_risk: number
   risk_tier: RiskTier
   risk_tier_label: string
   flagged: boolean
@@ -52,6 +60,7 @@ export interface PredictionResult {
   tier_cutoffs: TierCutoffs
   tier_context: TierContext | null
   factors: RiskFactor[]
+  local_attribution: LocalAttribution
   imputed_fields: string[]
   warnings: string[]
   limitations: string[]
@@ -63,6 +72,7 @@ export interface BatchRow {
   customer_id: string | null
   status: 'scored' | 'invalid'
   churn_probability: number | null
+  expected_revenue_at_risk?: number | null
   risk_tier: RiskTier | null
   flagged: boolean
   issues: string
@@ -81,7 +91,10 @@ export interface BatchSummary {
   invalid_rows: number
   flagged_rows: number
   mean_probability: number | null
+  predicted_churn_rate: number
+  baseline_churn_rate: number
   expected_churners: number
+  total_arr_at_risk: number
   tier_counts: Record<RiskTier, number>
   histogram: HistogramBin[]
 }
@@ -179,6 +192,24 @@ export interface ModelInfo {
   limitations: string[]
 }
 
+export interface BaselineComparisonEntry {
+  name: string
+  label: string
+  roc_auc: number
+  pr_auc: number
+  f1: number
+}
+
+export interface BaselineComparison {
+  baseline: BaselineComparisonEntry
+  production: BaselineComparisonEntry
+  lift: {
+    roc_auc_delta: number
+    pr_auc_delta: number
+    f1_delta: number
+  }
+}
+
 export interface ModelEvaluation {
   model_version: string
   synthetic_data: boolean
@@ -192,6 +223,7 @@ export interface ModelEvaluation {
     test: Record<string, number>
     description: string
   }>
+  baseline_comparison?: BaselineComparison
   selection: {
     metric: string
     best_candidate: string
@@ -208,6 +240,7 @@ export interface ModelEvaluation {
     ranking: {
       roc_auc: number
       pr_auc: number
+      f1?: number
       brier: number
       log_loss: number
       base_rate: number

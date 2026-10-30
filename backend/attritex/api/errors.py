@@ -8,9 +8,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from churnsense.api.registry import ModelUnavailableError
-from churnsense.data.validation import SchemaError
-from churnsense.ml.inference import InputValidationError
+from attritex.api.registry import ModelUnavailableError
+from attritex.data.validation import SchemaError
+from attritex.ml.inference import InputValidationError
 
 logger = logging.getLogger(__name__)
 

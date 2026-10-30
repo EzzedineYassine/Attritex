@@ -9,6 +9,7 @@ from sklearn.metrics import (
     average_precision_score,
     brier_score_loss,
     confusion_matrix,
+    f1_score,
     log_loss,
     precision_recall_curve,
     roc_auc_score,
@@ -16,8 +17,8 @@ from sklearn.metrics import (
 )
 from sklearn.pipeline import Pipeline
 
-from churnsense.data.schema import FEATURES_BY_NAME
-from churnsense.ml.thresholds import TierCutoffs, assign_risk_tiers
+from attritex.data.schema import FEATURES_BY_NAME
+from attritex.ml.thresholds import TierCutoffs, assign_risk_tiers
 
 MetricFunction = Callable[[np.ndarray, np.ndarray], float]
 
@@ -26,11 +27,17 @@ def _safe_ratio(numerator: float, denominator: float) -> float:
     return float(numerator / denominator) if denominator else 0.0
 
 
-def ranking_metrics(labels: np.ndarray, probabilities: np.ndarray) -> dict[str, float]:
+def ranking_metrics(
+    labels: np.ndarray,
+    probabilities: np.ndarray,
+    predictions: np.ndarray | None = None,
+) -> dict[str, float]:
     clipped = np.clip(probabilities, 1e-7, 1 - 1e-7)
+    binary_preds = predictions if predictions is not None else (probabilities >= 0.5).astype(int)
     return {
         "roc_auc": float(roc_auc_score(labels, probabilities)),
         "pr_auc": float(average_precision_score(labels, probabilities)),
+        "f1": float(f1_score(labels, binary_preds, zero_division=0)),
         "brier": float(brier_score_loss(labels, probabilities)),
         "log_loss": float(log_loss(labels, clipped, labels=[0, 1])),
         "base_rate": float(np.mean(labels)),
@@ -95,9 +102,42 @@ def _downsample(points: list[dict], limit: int) -> list[dict]:
 
 def roc_points(labels: np.ndarray, probabilities: np.ndarray, limit: int = 120) -> list[dict]:
     false_positive_rate, true_positive_rate, _ = roc_curve(labels, probabilities)
-    points = [{"fpr": float(x), "tpr": float(y)}
-              for x, y in zip(false_positive_rate, true_positive_rate, strict=True)]
-    return _downsample(points, limit)
+    order = np.argsort(false_positive_rate, kind="stable")
+    fpr_sorted = np.clip(np.asarray(false_positive_rate[order], dtype=float), 0.0, 1.0)
+    tpr_sorted = np.clip(
+        np.maximum.accumulate(np.asarray(true_positive_rate[order], dtype=float)),
+        0.0,
+        1.0,
+    )
+    unique_fpr, inverse = np.unique(fpr_sorted, return_inverse=True)
+    unique_tpr = np.zeros_like(unique_fpr)
+    np.maximum.at(unique_tpr, inverse, tpr_sorted)
+
+    if unique_fpr[0] > 0.0:
+        unique_fpr = np.insert(unique_fpr, 0, 0.0)
+        unique_tpr = np.insert(unique_tpr, 0, 0.0)
+    else:
+        unique_fpr[0] = 0.0
+        unique_tpr[0] = 0.0
+
+    if unique_fpr[-1] < 1.0:
+        unique_fpr = np.append(unique_fpr, 1.0)
+        unique_tpr = np.append(unique_tpr, 1.0)
+    else:
+        unique_fpr[-1] = 1.0
+        unique_tpr[-1] = 1.0
+
+    if len(unique_fpr) > limit:
+        indices = np.unique(np.linspace(0, len(unique_fpr) - 1, limit).round().astype(int))
+        indices[0] = 0
+        indices[-1] = len(unique_fpr) - 1
+        unique_fpr = unique_fpr[indices]
+        unique_tpr = unique_tpr[indices]
+
+    return [
+        {"fpr": float(x), "tpr": float(y)}
+        for x, y in zip(unique_fpr, unique_tpr, strict=True)
+    ]
 
 
 def precision_recall_points(labels: np.ndarray, probabilities: np.ndarray,
@@ -204,11 +244,14 @@ def feature_permutation_importance(pipeline: Pipeline, features: pd.DataFrame,
 
 def evaluate_holdout(labels: np.ndarray, probabilities: np.ndarray, cutoffs: TierCutoffs,
                      bootstrap_samples: int, seed: int) -> dict:
+    decision_eval = threshold_metrics(labels, probabilities, cutoffs.high)
+    ranking = ranking_metrics(labels, probabilities)
+    ranking["f1"] = decision_eval["f1"]
     return {
         "rows": int(len(labels)),
         "positives": int(labels.sum()),
-        "ranking": ranking_metrics(labels, probabilities),
-        "at_decision_threshold": threshold_metrics(labels, probabilities, cutoffs.high),
+        "ranking": ranking,
+        "at_decision_threshold": decision_eval,
         "at_default_threshold": threshold_metrics(labels, probabilities, 0.5),
         "confidence_intervals": bootstrap_intervals(labels, probabilities, cutoffs.high,
                                                     bootstrap_samples, seed),

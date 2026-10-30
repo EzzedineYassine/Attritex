@@ -170,9 +170,9 @@ export const ModelGovernanceView: React.FC<ModelGovernanceViewProps> = ({ modelI
           </div>
         </div>
 
-        <div className="overflow-x-auto max-h-80 overflow-y-auto">
+        <div className="overflow-visible">
           <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-subtle sticky top-0 border-b border-border">
+            <thead className="bg-subtle border-b border-border">
               <tr>
                 <th className="py-2.5 px-3 font-semibold text-ink">Field Name</th>
                 <th className="py-2.5 px-3 font-semibold text-ink">Group</th>
@@ -216,16 +216,16 @@ export const ModelGovernanceView: React.FC<ModelGovernanceViewProps> = ({ modelI
         </div>
 
         <div className="bg-ink text-canvas rounded p-4 font-mono text-xs space-y-2 overflow-x-auto">
-          <p className="text-terracotta-400"># 1. Download verified IBM Telco customer dataset</p>
-          <p>uv run churnsense data download</p>
-          <p className="text-terracotta-400 mt-3"># 2. Train candidate models, select parsimonious model, evaluate holdout</p>
-          <p>uv run churnsense train</p>
-          <p className="text-terracotta-400 mt-3"># 3. Inspect saved model artifacts, version, and headline metrics</p>
-          <p>uv run churnsense info</p>
-          <p className="text-terracotta-400 mt-3"># 4. Run automated test suite (31 unit & integration tests)</p>
+          <p className="text-terracotta-400">Step 1: Download verified IBM Telco customer dataset</p>
+          <p>uv run attritex data download</p>
+          <p className="text-terracotta-400 mt-3">Step 2: Train candidate models, select parsimonious model, evaluate holdout</p>
+          <p>uv run attritex train</p>
+          <p className="text-terracotta-400 mt-3">Step 3: Inspect saved model artifacts, version, and headline metrics</p>
+          <p>uv run attritex info</p>
+          <p className="text-terracotta-400 mt-3">Step 4: Run automated test suite</p>
           <p>uv run pytest</p>
-          <p className="text-terracotta-400 mt-3"># 5. Launch FastAPI prediction server on port 8000</p>
-          <p>uv run churnsense serve --port 8000</p>
+          <p className="text-terracotta-400 mt-3">Step 5: Launch FastAPI prediction server on port 8000</p>
+          <p>uv run attritex serve --port 8000</p>
         </div>
 
         <div className="pt-2">

@@ -7,11 +7,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from churnsense import __version__
-from churnsense.api.errors import register_error_handlers
-from churnsense.api.registry import ModelRegistry
-from churnsense.api.routes import model, predictions
-from churnsense.config import Settings, load_settings
+from attritex import __version__
+from attritex.api.errors import register_error_handlers
+from attritex.api.registry import ModelRegistry
+from attritex.api.routes import model, predictions
+from attritex.config import Settings, load_settings
 
 
 @asynccontextmanager
@@ -25,7 +25,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
     app = FastAPI(
-        title="ChurnSense API",
+        title="Attritex API",
         version=__version__,
         description="Customer churn probability, risk tiers, and model evaluation.",
         lifespan=lifespan,

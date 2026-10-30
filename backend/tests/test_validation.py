@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from churnsense.data.validation import SchemaError, validate_customers
+from attritex.data.validation import SchemaError, validate_customers
 
 
 def valid_record():
@@ -92,6 +92,17 @@ def test_phone_consistency_violation():
 
 def test_blank_total_charges_marked_for_imputation():
     rec = valid_record()
+    rec["TotalCharges"] = ""
+    df = pd.DataFrame([rec])
+    report = validate_customers(df)
+    assert len(report.issues) == 0
+    assert 1 in report.imputed_fields
+    assert "TotalCharges" in report.imputed_fields[1]
+
+
+def test_blank_total_charges_zero_tenure():
+    rec = valid_record()
+    rec["tenure"] = "0"
     rec["TotalCharges"] = ""
     df = pd.DataFrame([rec])
     report = validate_customers(df)

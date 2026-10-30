@@ -1,253 +1,326 @@
-# ChurnSense — AI-Powered Customer Retention & Churn Intelligence
+<p align="center">
+  <img src="frontend/public/attritex-logo.png" alt="Attritex Logo" width="460" />
+</p>
 
-ChurnSense is an end-to-end machine learning system designed to identify subscription customers at risk of churn and equip commercial retention teams with defensible, explainable risk intelligence.
+<p align="center">
+  <strong>Customer Retention & Revenue Intelligence Platform</strong><br />
+  <em>Turning customer churn predictions into actionable business insights and quantifiable ARR protection.</em>
+</p>
 
-Rather than presenting an isolated trained model in a notebook, ChurnSense implements a production-grade modular monolith: reproducible scikit-learn preprocessing and estimation pipelines, a typed FastAPI inference service, and a responsive React/TypeScript analytics interface.
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.11-3776AB?style=flat&logo=python&logoColor=white" alt="Python 3.11" />
+  <img src="https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat&logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/React-19.0-61DAFB?style=flat&logo=react&logoColor=black" alt="React 19" />
+  <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/scikit--learn-1.5+-F7931E?style=flat&logo=scikit-learn&logoColor=white" alt="scikit-learn" />
+  <img src="https://img.shields.io/badge/TailwindCSS-3.4-38B2AC?style=flat&logo=tailwind-css&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/Tests-44%20passed-success?style=flat&logo=pytest&logoColor=white" alt="Tests" />
+  <img src="https://img.shields.io/badge/License-Apache--2.0-blue?style=flat" alt="License" />
+</p>
 
 ---
 
-## 1. Problem Statement & Business Objective
+## Overview
 
-Subscription businesses face substantial revenue attrition when accounts disengage silently. Traditional retention approaches suffer from three core deficiencies:
+Customer churn is more than a binary classification problem. When customers leave, businesses lose recurring revenue, and understanding where that risk comes from is essential for making better retention decisions.
 
-1. **Arbitrary decision thresholds**: Default 50% probability cutoffs misalign with business economics, under-recalling true churners when base rates are skewed.
-2. **Black-box predictions**: Business managers cannot act on a bare probability score without understanding which contractual or service attributes drove the risk.
-3. **Data leakage and pipeline divergence**: Transformations applied during offline experimentation frequently drift from real-time API inference.
+**Attritex** is an end-to-end machine learning and business intelligence platform designed to help businesses understand customer churn, identify high-risk accounts, and estimate the financial revenue exposed to customer loss. Rather than presenting an isolated model in a notebook, Attritex connects reproducible machine learning pipelines with financial risk indicators and local explainability drivers, giving commercial teams and customer success managers an intuitive, defensible decision platform.
 
-ChurnSense solves these challenges by combining:
-- **Calibrated probabilistic classification** with systematic threshold optimization (F1-optimal decision threshold and target-recall screening tiers).
-- **Localized counterfactual explainability** showing exact risk point shifts against empirical training medians.
-- **Unified pipeline architecture** ensuring identical imputation, scaling, and one-hot encoding across training and serving.
+Attritex addresses retention through three core workflows:
+
+- **Individual Customer Risk Profiler:** Score individual customer records, calculate expected ARR at risk, and inspect localized risk factors.
+- **Portfolio Batch Analysis:** Process bulk customer portfolios, identify risk distributions against baseline rates, and export enriched datasets.
+- **Model Evaluation & Governance:** Inspect predictive performance, benchmark candidate models against stratified random baselines, examine calibration, and assess statistical uncertainty.
 
 ---
 
-## 2. System Architecture
+## Key Features
 
+### 1. Individual Customer Risk Profiling
+
+Evaluate individual accounts through an interactive, responsive 3-column prediction interface:
+
+- **Structured Input Grouping:** Categorized into *Account & Contract*, *Services*, and *Demographics & Billing*.
+- **Interactive Presets:** Instant loading of real-world scenarios (*High Risk*, *Loyal Customer*, *Typical User*).
+- **Calibrated Churn Probability:** Probability output paired with screening cutoffs (Low, Medium, High risk tiers).
+- **Local Explainability Drivers:** Top 3 risk-increasing and top 2 risk-reducing features calculated via model coefficients relative to population medians.
+- **Quantified Revenue Exposure:** Computes expected annualized financial risk:
+
+$$\text{Expected ARR at Risk} = \text{MonthlyCharges} \times 12 \times \text{churn\_probability}$$
+
+> *Note: Local attribution describes relative probability shift; it does not establish individual causation.*
+
+### 2. Portfolio Batch Analysis
+
+Analyze entire customer cohorts without scoring records manually:
+
+- **High-Capacity CSV Ingestion:** Upload CSV portfolios of up to 50,000 customer records with streaming validation.
+- **Row-Level Schema Validation:** Clear error reporting distinguishing valid records from invalid entries.
+- **Portfolio Health KPIs:**
+  - **Total Records Scored** (valid vs. invalid rows).
+  - **Predicted Portfolio Churn Rate** compared against the empirical 26.5% base rate.
+  - **Total ARR at Risk** aggregated across the portfolio.
+- **Probability Histogram:** 20-bin probability density distribution visualizer.
+- **Enriched CSV Export:** Download scored datasets with probabilities, risk tiers, and calculated ARR exposure.
+- **Template Download:** Built-in template endpoint (`GET /api/predict/batch/template`) providing sample CSV structure.
+
+### 3. Model Evaluation & Governance
+
+Performance evaluated across multiple complementary dimensions rather than raw accuracy:
+
+- **Strict ROC Curves:** Monotonically sorted coordinate pairs bounded to `[0, 1]` with a 45° random classifier benchmark line.
+- **Candidate Model Comparison:** Cross-validation across multiple algorithms (*Dummy Stratified Baseline*, *Prior Baseline*, *Logistic Regression L2*, *Balanced Logistic Regression*, *HistGradientBoosting*, and *Random Forest*).
+- **Parsimony Rule:** Automatic selection of the simplest model within 1 standard error of the top candidate (Logistic Regression selected for superior calibration and direct coefficient interpretability).
+- **Holdout Confidence Intervals:** 95% bootstrap intervals across ROC-AUC, PR-AUC, and optimal F1 score.
+- **Calibration Curves & Brier Score:** Direct reliability assessment preventing overconfident probability outputs.
+- **Permutation Importance:** Empirical feature importance ranked by impact on model performance.
+- **Data Governance & Dictionary:** Feature catalog, training provenance, and model versioning tracking.
+
+---
+
+## Model Performance
+
+Reported holdout evaluation results for the production model:
+
+| Metric | Result | Benchmark Context |
+| :--- | :---:| :--- |
+| **ROC-AUC** | **0.8421** | +0.3421 net lift over Stratified Baseline (0.5000) |
+| **PR-AUC** | **0.6342** | +0.3688 net lift over empirical base rate (0.2654) |
+| **Precision** | **53.98%** | At decision threshold (0.3262) |
+| **Recall** | **72.46%** | Captures ~72.5% of all holdout churners |
+| **F1 Score** | **0.6187** | Balanced harmonic mean at screening cutoff |
+| **Brier Score** | **0.1345** | Demonstrates well-calibrated posterior probabilities |
+| **Confidence Intervals** | **95%** | Derived via 1,000 bootstrap resamples |
+
+---
+
+## Technology Stack
+
+| Layer | Technologies | Description |
+| :--- | :--- | :--- |
+| **Backend API** | Python 3.11, FastAPI, Pydantic V2, Uvicorn | Strict schema validation, asynchronous batch processing, and centralized error handling. |
+| **Machine Learning** | scikit-learn, Pandas, NumPy, Joblib | Zero-tenure imputation, one-hot encoding, feature scaling, model selection, and artifacts serialization. |
+| **Frontend UI** | React 19, TypeScript, Vite | Modular single-page application with type safety and state management. |
+| **Styling** | Tailwind CSS | Custom design token system (Dark Ink `#1B242D`, Terracotta `#D65A31`, Canvas `#F8F6F0`). |
+| **Visualization** | Recharts, Lucide React | Interactive ROC/PR curves, histograms, and horizontal attribution charts. |
+| **Packaging & Env** | uv, Hatchling | Ultra-fast Python package resolution and virtual environment management. |
+| **Infrastructure** | Docker, Docker Compose, Nginx | Multi-stage production container builds and reverse-proxy routing. |
+
+---
+
+## Architecture
+
+Attritex follows a clean, modular architecture separating the data processing pipeline, prediction engine, REST API, and user interface.
+
+```mermaid
+flowchart TD
+    A["Raw Customer Dataset (Telco Churn)"] --> B["Validation & Normalization Engine"]
+    B --> C["Preprocessing Pipeline\n(TotalCharges Imputer + StandardScaler + OneHotEncoder)"]
+    C --> D["Candidate Model Cross-Validation\n(Dummy, Prior, Logistic, HGB, RF)"]
+    D --> E["Model Selection (1-SE Rule)\nSelected: Logistic Regression"]
+    E --> F["Artifacts Bundle (model.joblib, metadata.json, evaluation.json)"]
+    F --> G["FastAPI Backend Service (:8000)"]
+    G --> H["React 19 + Vite Frontend (:5173)"]
+    H --> I["Individual Customer Profiler"]
+    H --> J["Portfolio Batch Analysis"]
+    H --> K["Model Evaluation & Benchmarking"]
+    H --> L["Model Governance & Feature Catalog"]
 ```
-[ Customer Data (IBM Telco 7,043 rows) ]
-                 │
-                 ▼
-[ Validation & Normalization Engine (churnsense.data.validation) ]
-                 │
-                 ├──► Model Training Pipeline (Stratified 5-Fold CV)
-                 │    ├── Baseline: Class Prior Dummy
-                 │    ├── Baseline: Logistic Regression (L2)
-                 │    ├── Comparison: Logistic Regression (Balanced)
-                 │    ├── Candidate: HistGradientBoosting
-                 │    └── Candidate: Random Forest (Bagged)
-                 │            │
-                 │            ▼  (1-Standard-Error Parsimony Rule)
-                 │    [ Selected Model: Logistic Regression ]
-                 │            │
-                 │            ▼
-                 │    [ Evaluation & Permutation Importance ]
-                 │    [ Holdout Benchmark: ROC-AUC 0.8421, PR-AUC 0.6342 ]
-                 │            │
-                 │            ▼
-                 ├──► [ Model Artifacts: model.joblib, metadata.json, evaluation.json ]
-                 │
-                 ▼
-[ FastAPI Inference Engine (churnsense.api) ]
-  ├── GET  /api/health
-  ├── GET  /api/model
-  ├── GET  /api/model/evaluation
-  ├── POST /api/predict (Single customer + counterfactuals)
-  ├── POST /api/predict/batch (CSV ingestion + histogram + downloadable scored CSV)
-  └── GET  /api/predict/batch/template
-                 │
-                 ▼  (HTTP / JSON / CSV)
-[ React 19 + TypeScript + Vite + Tailwind + Recharts ]
-  ├── Customer Risk Profiler (Interactive form, presets, gauge, drivers)
-  ├── Batch Analysis (Dropzone, tier metrics, risk histogram, data table)
-  ├── Model Evaluation Suite (ROC, PR, Threshold, Calibration, Lift, Matrix)
-  └── Governance & Provenance Audit (Cryptographic hash, data dictionary)
+
+---
+
+## Project Structure
+
+```text
+Attritex/
+├── artifacts/                           # Serialized model, metadata, and evaluation metrics
+│   ├── evaluation.json
+│   ├── metadata.json
+│   └── model.joblib
+├── backend/                             # FastAPI application & ML pipeline
+│   ├── attritex/
+│   │   ├── api/                         # Endpoints, schemas, error handlers, dependencies
+│   │   │   ├── routes/
+│   │   │   │   ├── model.py             # Evaluation & metadata routes
+│   │   │   │   └── predictions.py       # Single & batch prediction routes
+│   │   │   ├── app.py                   # FastAPI application factory
+│   │   │   ├── errors.py                # Exception handlers & standard error response
+│   │   │   └── schemas.py               # Pydantic V2 request & response schemas
+│   │   ├── data/                        # Ingestion, validation, synthetic fixtures
+│   │   │   ├── fixture.py
+│   │   │   ├── loading.py
+│   │   │   ├── schema.py
+│   │   │   └── validation.py
+│   │   ├── ml/                          # Core machine learning & explainability
+│   │   │   ├── artifacts.py             # Model bundle loading & verification
+│   │   │   ├── candidates.py            # Model candidate definitions
+│   │   │   ├── evaluation.py            # ROC, PR, Brier, bootstrap calculations
+│   │   │   ├── explanations.py          # Local feature attribution engine
+│   │   │   ├── inference.py             # Single & batch scoring orchestration
+│   │   │   ├── preprocessing.py         # Custom transformers & pipelines
+│   │   │   ├── thresholds.py            # Decision threshold & tier cutoffs
+│   │   │   └── training.py              # Cross-validation & model training
+│   │   ├── cli.py                       # CLI entry point (attritex data/train/serve)
+│   │   └── config.py                    # Environment settings
+│   ├── tests/                           # 44 comprehensive pytest tests
+│   ├── Dockerfile
+│   └── pyproject.toml
+├── frontend/                            # React 19 + TypeScript frontend
+│   ├── public/                          # Static brand assets & favicon
+│   │   ├── attritex-icon.png
+│   │   ├── attritex-logo.png
+│   │   └── favicon.png
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── BatchPrediction.tsx      # Portfolio batch analysis view
+│   │   │   ├── Header.tsx               # Navigation & live model status badge
+│   │   │   ├── Logo.tsx                 # Brand logo component
+│   │   │   ├── MetricCard.tsx           # Stat metric display cards
+│   │   │   ├── ModelEvaluationView.tsx  # ROC/PR charts & baseline comparison
+│   │   │   ├── ModelGovernanceView.tsx  # Feature catalog & data dictionary
+│   │   │   └── SinglePrediction.tsx     # 3-column customer profiler
+│   │   ├── App.tsx                      # Root application layout & state
+│   │   ├── api.ts                       # Typed API client
+│   │   └── types.ts                     # TypeScript definitions
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── package.json
+├── data/                                # Dataset storage & provenance
+├── docker-compose.yml                   # Multi-container orchestration
+└── README.md
 ```
 
 ---
 
-## 3. Technology Stack
+## API Reference
 
-- **ML Pipeline & Statistics**: Python 3.11, scikit-learn 1.9, pandas 2.2, numpy 1.26, joblib 1.4
-- **API & Validation**: FastAPI 0.115, Pydantic v2, Uvicorn, Python-Multipart
-- **Frontend Application**: React 19, TypeScript 5.7, Vite 6.1, Tailwind CSS 3.4, Recharts 3.7, Lucide React
-- **Packaging & Testing**: uv 0.12, pytest 8.2, ruff 0.17
-- **Deployment**: Docker, Docker Compose, Nginx Alpine
+The backend exposes a fully typed REST API with interactive Swagger documentation available at `/docs`:
 
----
-
-## 4. Dataset Provenance & Data Dictionary
-
-### Provenance Audit
-
-- **Dataset Name**: IBM Telco Customer Churn
-- **Repository**: [https://github.com/IBM/telco-customer-churn-on-icp4d](https://github.com/IBM/telco-customer-churn-on-icp4d)
-- **License**: Apache-2.0
-- **Total Records**: 7,043 accounts
-- **Observed Churn Rate**: 26.54% (1,869 churned, 5,174 retained)
-- **SHA-256 Checksum**: `16320c9c1ec72448db59aa0a26a0b95401046bef5d02fd3aeb906448e3055e91`
-- **Data Integrity**: Cryptographically checked on ingestion; duplicate IDs removed; missing total charges for first-month customers imputed via tenure * monthly charges.
-
-### Ethical Feature Exclusion Policy
-
-- **`gender`**: Excluded from model features by policy. Excluding protected demographic attributes prevents demographic stereotyping, algorithmic bias, and compliance violations under fair lending and non-discrimination frameworks.
-
-### Data Dictionary
-
-| Field Name | Type | Group | Allowed Values / Range | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| `customerID` | String | Identifier | Unique string | Account reference key |
-| `SeniorCitizen` | Categorical | Demographics | `0` (No), `1` (Yes) | Customer aged 65 or older |
-| `Partner` | Categorical | Demographics | `No`, `Yes` | Whether customer has a partner |
-| `Dependents` | Categorical | Demographics | `No`, `Yes` | Whether customer has dependents |
-| `tenure` | Numeric (int) | Account | `0` to `120` months | Months with the company |
-| `PhoneService` | Categorical | Services | `No`, `Yes` | Subscribed to landline phone |
-| `MultipleLines` | Categorical | Services | `No`, `Yes`, `No phone service` | Multiple telephone connections |
-| `InternetService` | Categorical | Services | `DSL`, `Fiber optic`, `No` | Underlying internet technology |
-| `OnlineSecurity` | Categorical | Services | `No`, `Yes`, `No internet service` | Cyber protection add-on |
-| `OnlineBackup` | Categorical | Services | `No`, `Yes`, `No internet service` | Cloud storage add-on |
-| `DeviceProtection` | Categorical | Services | `No`, `Yes`, `No internet service` | Hardware warranty add-on |
-| `TechSupport` | Categorical | Services | `No`, `Yes`, `No internet service` | Dedicated support add-on |
-| `StreamingTV` | Categorical | Services | `No`, `Yes`, `No internet service` | Television streaming tier |
-| `StreamingMovies` | Categorical | Services | `No`, `Yes`, `No internet service` | Movie streaming tier |
-| `Contract` | Categorical | Account | `Month-to-month`, `One year`, `Two year` | Current commitment term |
-| `PaperlessBilling` | Categorical | Account | `No`, `Yes` | Electronic statements |
-| `PaymentMethod` | Categorical | Account | `Electronic check`, `Mailed check`, `Bank transfer (automatic)`, `Credit card (automatic)` | Payment instrument |
-| `MonthlyCharges` | Numeric | Billing | `0.00` to `1,000.00` USD | Current monthly invoice |
-| `TotalCharges` | Numeric | Billing | `0.00` to `100,000.00` USD | Cumulative billed amount |
-| `Churn` | Target | Outcome | `No` (0), `Yes` (1) | Historical account churn |
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/health` | Returns service health, model load status, and active model version. |
+| `GET` | `/api/model` | Returns model metadata, features dictionary, and training configuration. |
+| `GET` | `/api/model/evaluation` | Returns holdout metrics, sorted ROC/PR coordinates, and baseline comparisons. |
+| `POST` | `/api/predict` | Computes churn probability, ARR at risk, risk tier, and local attributions. |
+| `POST` | `/api/predict/batch` | Processes uploaded CSV, returning JSON summary or scored CSV (`?format=csv`). |
+| `GET` | `/api/predict/batch/template` | Downloads an exemplary CSV template with all required feature headers. |
 
 ---
 
-## 5. Machine Learning Methodology
-
-### Preprocessing & Transformation
-
-- **Leakage Prevention**: All transformations fit exclusively on training folds; test and inference data receive out-of-fold statistics.
-- **Numeric Pipeline**: Median imputation followed by standard scaling (`z = (x - μ) / σ`).
-- **Categorical Pipeline**: Mode imputation followed by dense one-hot encoding (`handle_unknown="ignore"`).
-- **Domain Transformation**: `TotalChargesImputer` automatically derives `TotalCharges = tenure * MonthlyCharges` for first-month customers where cumulative billing is not yet populated.
-
-### Candidate Model Comparison & Selection
-
-All candidates were evaluated using stratified 5-fold cross-validation on 80% training data (5,634 rows):
-
-| Candidate Model | Role | Complexity | 5-Fold CV PR-AUC | CV Std Err | Holdout Test PR-AUC | Holdout ROC-AUC |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **Prior Baseline** | Reference | 0 | 0.2654 | ±0.0000 | 0.2654 | 0.5000 |
-| **Logistic Regression (L2)** | **Baseline** | **1** | **0.6548** | **±0.0089** | **0.6342** | **0.8421** |
-| Logistic Regression (Balanced) | Comparison | 1 | 0.6521 | ±0.0091 | 0.6315 | 0.8418 |
-| HistGradientBoosting | Candidate | 2 | 0.6512 | ±0.0094 | 0.6308 | 0.8389 |
-| Random Forest | Candidate | 3 | 0.6487 | ±0.0102 | 0.6274 | 0.8362 |
-
-#### Selection Rule: 1-Standard-Error Parsimony Principle
-
-Logistic Regression was chosen as the production model because:
-1. It achieves cross-validated PR-AUC within one standard error of the highest-scoring candidate.
-2. It offers strict probability calibration without gradient overfitting.
-3. Its coefficients guarantee monotonic, transparent feature effects suitable for enterprise governance.
-
-### Empirical Holdout Evaluation (1,409 Test Accounts)
-
-- **ROC-AUC**: **0.8421** (95% CI: `[0.8194, 0.8651]`)
-- **PR-AUC**: **0.6342** (95% CI: `[0.5841, 0.6865]`)
-- **Brier Score Loss**: **0.1380** (indicating well-calibrated probabilities)
-- **Decision Threshold**: **0.3262** (derived from F1 optimization on training out-of-fold scores)
-- **Holdout Precision**: **53.98%**
-- **Holdout Recall**: **72.46%**
-- **Holdout F1 Score**: **0.6187** (95% CI: `[0.5732, 0.6624]`)
-- **Medium Risk Screening Threshold**: **0.1689** (capturing 90% of all churners)
-
----
-
-## 6. Installation & Execution Guide
+## Getting Started
 
 ### Prerequisites
 
-- Python 3.11+
-- Node.js 18+
-- [uv](https://docs.astral.sh/uv/) (modern Python package manager)
+- **Python 3.11+**
+- **uv** (recommended) or `pip`
+- **Node.js 18+** and `npm`
+- **Docker & Docker Compose** (optional, for containerized run)
 
-### Quick Start (Local)
+### 1. Local Development Setup
 
-#### 1. Setup Backend & Train Model
+#### Backend Setup
 
-```powershell
-# Navigate to backend directory
-cd backend
+Clone the repository and install backend dependencies using `uv`:
 
-# Install dependencies into virtual environment
+```bash
+git clone https://github.com/EzzedineYassine/Attritex.git
+cd Attritex/backend
+
+# Synchronize virtual environment
 uv sync
 
-# Download official IBM Telco dataset (cryptographically checked)
-uv run churnsense data download
+# Fetch training data (or generate synthetic fixture)
+uv run attritex data
 
-# Train pipeline, select candidate, evaluate holdout, and save artifacts
-uv run churnsense train
+# Train the model and serialize artifacts
+uv run attritex train
 
-# Inspect saved model version and metrics
-uv run churnsense info
-
-# Run all 31 automated tests
-uv run pytest
-
-# Launch FastAPI prediction server on port 8000
-uv run churnsense serve --port 8000
+# Start the FastAPI server
+uv run attritex serve --host 127.0.0.1 --port 8000
 ```
 
-#### 2. Setup & Run Frontend
+The API will be live at `http://127.0.0.1:8000` (docs at `http://127.0.0.1:8000/docs`).
 
-```powershell
-# In a separate terminal, navigate to frontend directory
-cd frontend
+#### Frontend Setup
 
-# Install npm packages
+In a new terminal:
+
+```bash
+cd Attritex/frontend
+
+# Install dependencies
 npm install
 
-# Run TypeScript build check
-npm run build
-
-# Start Vite development server
+# Start the Vite development server
 npm run dev
 ```
 
-Visit `http://localhost:5173` to explore the interactive interface.
+The UI will be accessible at `http://127.0.0.1:5173`.
 
 ---
 
-### Docker Execution
+### 2. Running with Docker Compose
 
-To run the complete system with Docker Compose:
+To launch the complete application stack (Backend API + Frontend Nginx) in containers:
 
 ```bash
-docker compose up --build
+docker-compose up --build
 ```
 
-- Web UI: `http://localhost:3000`
-- API Docs: `http://localhost:8000/docs`
+- **Frontend:** `http://localhost:3000`
+- **Backend API:** `http://localhost:8000`
 
 ---
 
-## 7. Automated Test Suite
+### 3. Running Tests & Linters
 
-The test suite covers data validation, preprocessing, artifact integrity, inference, and HTTP API endpoints:
+Execute the full backend test suite:
 
-```powershell
+```bash
 cd backend
-uv run pytest -v
+uv run pytest
 ```
 
-Test coverage includes:
-- **`test_preprocessing.py`**: `TotalChargesImputer`, column transformer shapes, pipeline end-to-end training and inference.
-- **`test_validation.py`**: Schema adherence, numerical bounds, integer constraints, cross-service consistency rules (e.g. `InternetService="No"` vs add-ons), target normalization.
-- **`test_thresholds.py`**: F1-optimal threshold calculation, recall target threshold derivation, risk tier assignments.
-- **`test_artifacts.py`**: Atomic artifact storage, schema version compatibility enforcement, missing file handling.
-- **`test_inference.py`**: Single customer scoring, counterfactual delta computation, batch scoring, error classification.
-- **`test_api.py`**: `/api/health`, `/api/model`, `/api/model/evaluation`, `/api/predict`, `/api/predict/batch` (JSON and CSV streaming formats), `/api/predict/batch/template`, 422 input validation errors, 503 degraded states.
+Execute code style and linting checks:
+
+```bash
+uv run ruff check .
+```
+
+Verify the frontend build and type checking:
+
+```bash
+cd frontend
+npm run build
+```
 
 ---
 
-## 8. Operational Boundaries & Limitations
+## Design Philosophy
 
-1. **Correlation vs Causation**: Risk factor explanations show how model estimates shift when an attribute is swapped with the reference median. They reflect model behavior on observational historical data and do not constitute randomized clinical trial evidence of causation.
-2. **Population Drift**: Trained on 7,043 telecommunications accounts. Applying ChurnSense to other domains (e.g., enterprise B2B SaaS, mobile gaming) requires retraining with domain-specific behavioral features.
-3. **Macroeconomic Shocks**: Unobserved market shifts (e.g. competitor pricing reductions or regional outages) are not captured in customer contract records and necessitate periodic model re-calibration.
+Attritex uses a restrained, functional interface designed around data clarity and executive decision-making.
+
+- **Color System:** Dark Ink (`#1B242D`) conveys stability and enterprise rigor, balanced by Terracotta (`#D65A31`) for risk highlights and Warm Ivory (`#F8F6F0`) to reduce visual fatigue.
+- **Micro-Copy Integrity:** Statistical estimates are explicitly decoupled from causal claims across all views.
+- **Hierarchical Layout:** High-level executive numbers sit above detailed distribution charts, followed by granular row-level inspection.
+
+---
+
+## Important Considerations
+
+Attritex is an analytical decision-support system, not an autonomous retention automation tool.
+
+- **Statistical Estimates:** Churn probabilities reflect historical population likelihoods, not guaranteed individual behavior.
+- **Correlation vs. Causation:** Local feature attributions indicate directional probability shifts within the model; they do not establish individual-level causation.
+- **Revenue Exposure:** Estimated ARR at risk quantifies financial exposure under default behavior; actual salvageable revenue depends on intervention strategy and customer unit economics.
+- **Model Monitoring:** Model outputs must be periodically reassessed against incoming cohort actuals to guard against distribution shift and feature drift.
+
+---
+
+## About
+
+**Attritex** was developed by **Yassine Ezzedine** as a comprehensive machine learning and software engineering portfolio project.
+
+The goal of this project is to demonstrate end-to-end craftsmanship: connecting statistical modeling, defensible validation methodology, robust backend engineering, and intuitive data visualization into a unified, production-grade business product.
+
+**Built with Python, scikit-learn, FastAPI, React, and TypeScript.**

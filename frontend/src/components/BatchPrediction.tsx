@@ -70,7 +70,7 @@ export const BatchPrediction: React.FC = () => {
       const url = window.URL.createObjectURL(blob)
       const anchor = document.createElement('a')
       anchor.href = url
-      anchor.download = 'churnsense_batch_template.csv'
+      anchor.download = 'attritex_batch_template.csv'
       document.body.appendChild(anchor)
       anchor.click()
       document.body.removeChild(anchor)
@@ -107,15 +107,22 @@ export const BatchPrediction: React.FC = () => {
     return row.risk_tier === tierFilter
   })
 
+  const predictedRatePct = result
+    ? ((result.summary.predicted_churn_rate ?? result.summary.mean_probability ?? 0) * 100)
+    : 0
+  const baselineRatePct = result
+    ? ((result.summary.baseline_churn_rate ?? 0.2654) * 100)
+    : 26.5
+  const rateDelta = predictedRatePct - baselineRatePct
+
   return (
     <div className="space-y-6">
       <div className="bg-panel rounded-lg border border-border p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
           <div>
-            <h2 className="text-base font-semibold text-ink">Batch Customer Risk Scoring</h2>
+            <h2 className="text-base font-semibold text-ink">Batch Customer Risk & ARR Analysis</h2>
             <p className="text-xs text-ink-muted mt-0.5">
-              Upload a customer portfolio CSV to generate bulk churn probabilities, aggregate risk
-              distributions, and an exported scored dataset.
+              Upload a customer portfolio CSV to generate bulk churn probabilities, aggregate ARR at risk, and an exported scored dataset.
             </p>
           </div>
           <button
@@ -184,42 +191,26 @@ export const BatchPrediction: React.FC = () => {
 
       {result && (
         <div className="space-y-6">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <MetricCard
-              label="Total Rows"
-              value={result.summary.input_rows.toLocaleString()}
-              subtext="Uploaded records"
-            />
-            <MetricCard
-              label="Scored Rows"
+              label="Total Records Scored"
               value={result.summary.scored_rows.toLocaleString()}
-              subtext="Valid for scoring"
+              subtext={`${result.summary.input_rows.toLocaleString()} uploaded (${result.summary.invalid_rows.toLocaleString()} invalid) · ${result.summary.flagged_rows.toLocaleString()} flagged`}
             />
             <MetricCard
-              label="Invalid Rows"
-              value={result.summary.invalid_rows.toLocaleString()}
-              subtext="Failed validation"
-              variant={result.summary.invalid_rows > 0 ? 'danger' : 'default'}
+              label="Predicted Churn Rate (vs 26.5% Baseline)"
+              value={`${predictedRatePct.toFixed(1)}%`}
+              subtext={`${rateDelta >= 0 ? '+' : ''}${rateDelta.toFixed(1)} pts vs ${baselineRatePct.toFixed(1)}% empirical baseline (${result.summary.expected_churners.toFixed(1)} expected churners)`}
+              variant={rateDelta > 0 ? 'danger' : 'highlight'}
             />
             <MetricCard
-              label="Flagged Accounts"
-              value={result.summary.flagged_rows.toLocaleString()}
-              subtext={`Above ${(result.decision_threshold * 100).toFixed(1)}% threshold`}
+              label="Total Annual Recurring Revenue (ARR) at Risk"
+              value={`$${(result.summary.total_arr_at_risk ?? 0).toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}`}
+              subtext="Sum of (MonthlyCharges × 12 × Churn Probability)"
               variant="highlight"
-            />
-            <MetricCard
-              label="Mean Risk"
-              value={
-                result.summary.mean_probability !== null
-                  ? `${(result.summary.mean_probability * 100).toFixed(1)}%`
-                  : 'N/A'
-              }
-              subtext="Portfolio average"
-            />
-            <MetricCard
-              label="Expected Churn"
-              value={Math.round(result.summary.expected_churners).toLocaleString()}
-              subtext="Expected lost users"
             />
           </div>
 
@@ -378,6 +369,7 @@ export const BatchPrediction: React.FC = () => {
                     <th className="py-2.5 px-3 font-semibold text-ink">Customer ID</th>
                     <th className="py-2.5 px-3 font-semibold text-ink">Status</th>
                     <th className="py-2.5 px-3 font-semibold text-ink">Probability</th>
+                    <th className="py-2.5 px-3 font-semibold text-ink">ARR at Risk</th>
                     <th className="py-2.5 px-3 font-semibold text-ink">Risk Tier</th>
                     <th className="py-2.5 px-3 font-semibold text-ink">Action Flag</th>
                     <th className="py-2.5 px-3 font-semibold text-ink">Validation Notes</th>
@@ -386,7 +378,7 @@ export const BatchPrediction: React.FC = () => {
                 <tbody className="divide-y divide-border">
                   {filteredRows.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-ink-muted italic">
+                      <td colSpan={8} className="py-8 text-center text-ink-muted italic">
                         No customer rows match the selected filter.
                       </td>
                     </tr>
@@ -411,6 +403,15 @@ export const BatchPrediction: React.FC = () => {
                         <td className="py-2 px-3 font-mono font-bold text-ink">
                           {row.churn_probability !== null
                             ? `${(row.churn_probability * 100).toFixed(1)}%`
+                            : '—'}
+                        </td>
+                        <td className="py-2 px-3 font-mono text-ink">
+                          {row.expected_revenue_at_risk !== null &&
+                          row.expected_revenue_at_risk !== undefined
+                            ? `$${row.expected_revenue_at_risk.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}`
                             : '—'}
                         </td>
                         <td className="py-2 px-3">

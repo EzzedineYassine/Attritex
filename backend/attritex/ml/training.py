@@ -13,28 +13,33 @@ import sklearn
 from sklearn.model_selection import StratifiedKFold, cross_val_predict, cross_validate, train_test_split
 from sklearn.pipeline import Pipeline
 
-from churnsense import __version__
-from churnsense.data.loading import read_customer_csv, read_provenance
-from churnsense.data.schema import (
+from attritex import __version__
+from attritex.data.loading import read_customer_csv, read_provenance
+from attritex.data.schema import (
     EXCLUDED_FEATURES,
     ID_COLUMN,
     MODEL_FEATURES,
     TARGET_COLUMN,
     model_feature_names,
 )
-from churnsense.data.validation import ValidationReport, validate_customers
-from churnsense.ml.artifacts import ARTIFACT_SCHEMA_VERSION, save_bundle
-from churnsense.ml.candidates import CANDIDATES, CandidateSpec
-from churnsense.ml.evaluation import evaluate_holdout, feature_permutation_importance, ranking_metrics
-from churnsense.ml.explanations import build_reference_profile
-from churnsense.ml.preprocessing import build_model_pipeline, encoded_feature_names
-from churnsense.ml.thresholds import TierCutoffs, derive_tier_cutoffs
+from attritex.data.validation import ValidationReport, validate_customers
+from attritex.ml.artifacts import ARTIFACT_SCHEMA_VERSION, save_bundle
+from attritex.ml.candidates import CANDIDATES, CandidateSpec
+from attritex.ml.evaluation import (
+    evaluate_holdout,
+    feature_permutation_importance,
+    ranking_metrics,
+)
+from attritex.ml.explanations import build_reference_profile
+from attritex.ml.preprocessing import build_model_pipeline, encoded_feature_names
+from attritex.ml.thresholds import TierCutoffs, derive_tier_cutoffs
 
 logger = logging.getLogger(__name__)
 
 CV_SCORING = {
     "pr_auc": "average_precision",
     "roc_auc": "roc_auc",
+    "f1": "f1",
     "brier": "neg_brier_score",
     "log_loss": "neg_log_loss",
 }
@@ -154,11 +159,12 @@ def evaluate_candidates(train_x: pd.DataFrame, train_y: np.ndarray, test_x: pd.D
         raw_scores = cross_validate(pipeline, train_x, train_y, cv=folds, scoring=CV_SCORING)
         pipeline.fit(train_x, train_y)
         test_probabilities = pipeline.predict_proba(test_x)[:, 1]
+        test_predictions = pipeline.predict(test_x)
         results.append(CandidateResult(
             spec=spec,
             pipeline=pipeline,
             cv_scores=_summarise_cv(raw_scores),
-            test_ranking=ranking_metrics(test_y, test_probabilities),
+            test_ranking=ranking_metrics(test_y, test_probabilities, test_predictions),
         ))
     return results
 
@@ -189,6 +195,35 @@ def select_candidate(results: list[CandidateResult], folds: int) -> tuple[Candid
         ),
     }
     return chosen, rationale
+
+
+def _build_baseline_comparison(results: list[CandidateResult], chosen: CandidateResult,
+                               holdout: dict) -> dict:
+    by_name = {result.spec.name: result for result in results}
+    dummy = by_name.get("dummy_stratified") or by_name.get("prior_baseline")
+    dummy_metrics = {
+        "name": dummy.spec.name if dummy else "dummy_stratified",
+        "label": dummy.spec.label if dummy else "Dummy Classifier (Stratified)",
+        "roc_auc": float(dummy.test_ranking["roc_auc"]) if dummy else 0.5,
+        "pr_auc": float(dummy.test_ranking["pr_auc"]) if dummy else float(holdout["ranking"]["base_rate"]),
+        "f1": float(dummy.test_ranking["f1"]) if dummy else 0.0,
+    }
+    production_metrics = {
+        "name": chosen.spec.name,
+        "label": chosen.spec.label,
+        "roc_auc": float(holdout["ranking"]["roc_auc"]),
+        "pr_auc": float(holdout["ranking"]["pr_auc"]),
+        "f1": float(holdout["at_decision_threshold"]["f1"]),
+    }
+    return {
+        "baseline": dummy_metrics,
+        "production": production_metrics,
+        "lift": {
+            "roc_auc_delta": round(production_metrics["roc_auc"] - dummy_metrics["roc_auc"], 4),
+            "pr_auc_delta": round(production_metrics["pr_auc"] - dummy_metrics["pr_auc"], 4),
+            "f1_delta": round(production_metrics["f1"] - dummy_metrics["f1"], 4),
+        },
+    }
 
 
 def _model_version(created_at: datetime, model_name: str, data_sha: str) -> str:
@@ -234,7 +269,7 @@ def _build_metadata(*, created_at: datetime, chosen: CandidateResult, config: Tr
         },
         "reference_profile": reference_profile,
         "environment": {
-            "churnsense": __version__,
+            "attritex": __version__,
             "python": platform.python_version(),
             "scikit_learn": sklearn.__version__,
             "pandas": pd.__version__,
@@ -283,10 +318,18 @@ def train_from_frame(raw: pd.DataFrame, provenance: dict, artifact_dir: Path,
         quality=prepared.quality, split=split, cutoffs=cutoffs, rationale=rationale,
         holdout=holdout, reference_profile=build_reference_profile(train_x),
     )
+    candidates_payload = []
+    for result in results:
+        payload = result.to_dict()
+        if result.spec.name == chosen.spec.name:
+            payload["test"] = {**payload["test"], "f1": float(holdout["at_decision_threshold"]["f1"])}
+        candidates_payload.append(payload)
+
     evaluation = {
         "model_version": metadata["model_version"],
         "synthetic_data": bool(provenance.get("synthetic")),
-        "candidates": [result.to_dict() for result in results],
+        "candidates": candidates_payload,
+        "baseline_comparison": _build_baseline_comparison(results, chosen, holdout),
         "selection": rationale,
         "holdout": holdout,
         "out_of_fold": {

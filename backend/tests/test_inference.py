@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from churnsense.ml.inference import (
+from attritex.ml.inference import (
     InputValidationError,
     score_batch,
     score_customer,

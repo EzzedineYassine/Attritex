@@ -2,39 +2,45 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, create_model
-
-from churnsense.data.schema import ID_COLUMN, MODEL_FEATURES, FeatureSpec
+from pydantic import BaseModel, ConfigDict, Field
 
 RiskTier = Literal["low", "medium", "high"]
+YesNo = Literal["No", "Yes"]
+SeniorCitizenValue = Literal["No", "Yes", "0", "1", 0, 1]
+MultipleLinesValue = Literal["No", "Yes", "No phone service"]
+InternetServiceValue = Literal["DSL", "Fiber optic", "No"]
+InternetAddonValue = Literal["No", "Yes", "No internet service"]
+ContractValue = Literal["Month-to-month", "One year", "Two year"]
+PaymentMethodValue = Literal[
+    "Electronic check",
+    "Mailed check",
+    "Bank transfer (automatic)",
+    "Credit card (automatic)",
+]
 
 
-def _field_definition(spec: FeatureSpec) -> tuple[Any, Any]:
-    if spec.name == "SeniorCitizen":
-        annotation: Any = Literal["No", "Yes", "0", "1"] | int
-        return annotation, Field(..., title=spec.label, description=spec.description)
-    if spec.kind == "categorical":
-        annotation: Any = Literal[spec.allowed_values]
-        return annotation, Field(..., title=spec.label, description=spec.description)
-    numeric_type: Any = int if spec.integer else float
-    annotation = numeric_type | None if spec.nullable else numeric_type
-    default = None if spec.nullable else ...
-    return annotation, Field(default, title=spec.label, description=spec.description,
-                             ge=spec.minimum, le=spec.maximum)
+class CustomerRecord(BaseModel):
+    model_config = ConfigDict(extra="forbid", populate_by_name=True, str_strip_whitespace=True)
 
-
-class _CustomerBase(BaseModel):
-    model_config = ConfigDict(extra="forbid", populate_by_name=True)
-
-
-CustomerRecord = create_model(
-    "CustomerRecord",
-    __base__=_CustomerBase,
-    **{
-        ID_COLUMN: (str | None, Field(None, max_length=64, title="Customer ID")),
-        **{spec.name: _field_definition(spec) for spec in MODEL_FEATURES},
-    },
-)
+    customerID: str | None = Field(default=None, max_length=64, title="Customer ID")
+    SeniorCitizen: SeniorCitizenValue = Field(..., title="Senior citizen")
+    Partner: YesNo = Field(..., title="Has partner")
+    Dependents: YesNo = Field(..., title="Has dependents")
+    tenure: int = Field(..., ge=0, le=120, strict=False, title="Tenure")
+    Contract: ContractValue = Field(..., title="Contract")
+    PaperlessBilling: YesNo = Field(..., title="Paperless billing")
+    PaymentMethod: PaymentMethodValue = Field(..., title="Payment method")
+    PhoneService: YesNo = Field(..., title="Phone service")
+    MultipleLines: MultipleLinesValue = Field(..., title="Multiple lines")
+    InternetService: InternetServiceValue = Field(..., title="Internet service")
+    OnlineSecurity: InternetAddonValue = Field(..., title="Online security")
+    OnlineBackup: InternetAddonValue = Field(..., title="Online backup")
+    DeviceProtection: InternetAddonValue = Field(..., title="Device protection")
+    TechSupport: InternetAddonValue = Field(..., title="Tech support")
+    StreamingTV: InternetAddonValue = Field(..., title="Streaming TV")
+    StreamingMovies: InternetAddonValue = Field(..., title="Streaming movies")
+    MonthlyCharges: float = Field(..., ge=0.0, le=1000.0, title="Monthly charges")
+    TotalCharges: float | None = Field(default=None, ge=0.0, le=100000.0, title="Total charges")
 
 
 class HealthResponse(BaseModel):
@@ -67,11 +73,19 @@ class RiskFactor(BaseModel):
     reference_value: str
     probability_if_reference: float
     effect: float
+    attribution_score: float | None = None
+    direction: Literal["risk_increasing", "risk_reducing"] | None = None
+
+
+class LocalAttribution(BaseModel):
+    top_risk_increasing: list[RiskFactor]
+    top_risk_reducing: list[RiskFactor]
 
 
 class PredictionResponse(BaseModel):
     customer_id: str | None
     churn_probability: float
+    expected_revenue_at_risk: float
     risk_tier: RiskTier
     risk_tier_label: str
     flagged: bool
@@ -79,6 +93,7 @@ class PredictionResponse(BaseModel):
     tier_cutoffs: TierCutoffsModel
     tier_context: TierContext | None
     factors: list[RiskFactor]
+    local_attribution: LocalAttribution
     imputed_fields: list[str]
     warnings: list[str]
     limitations: list[str]
@@ -90,6 +105,7 @@ class BatchRow(BaseModel):
     customer_id: str | None
     status: Literal["scored", "invalid"]
     churn_probability: float | None
+    expected_revenue_at_risk: float | None = None
     risk_tier: RiskTier | None
     flagged: bool
     issues: str
@@ -108,7 +124,10 @@ class BatchSummary(BaseModel):
     invalid_rows: int
     flagged_rows: int
     mean_probability: float | None
+    predicted_churn_rate: float
+    baseline_churn_rate: float
     expected_churners: float
+    total_arr_at_risk: float
     tier_counts: dict[RiskTier, int]
     histogram: list[HistogramBin]
 

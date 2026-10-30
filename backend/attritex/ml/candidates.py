@@ -35,6 +35,15 @@ class CandidateSpec:
 
 CANDIDATES: tuple[CandidateSpec, ...] = (
     CandidateSpec(
+        name="dummy_stratified",
+        label="Dummy Classifier (Stratified)",
+        role="reference",
+        complexity=0,
+        eligible=False,
+        description="Randomly predicts churn matching the empirical training class distribution.",
+        factory=lambda seed: DummyClassifier(strategy="stratified", random_state=seed),
+    ),
+    CandidateSpec(
         name="prior_baseline",
         label="Prior baseline",
         role="reference",
@@ -60,7 +69,7 @@ CANDIDATES: tuple[CandidateSpec, ...] = (
         eligible=False,
         description=(
             "Same model with balanced class weights. Kept for comparison only: reweighting "
-            "inflates predicted probabilities, and ChurnSense reports probabilities to users."
+            "inflates predicted probabilities, and Attritex reports probabilities to users."
         ),
         factory=lambda seed: LogisticRegression(C=1.0, max_iter=2000, class_weight="balanced"),
     ),

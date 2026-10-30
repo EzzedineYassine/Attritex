@@ -45,10 +45,12 @@ export const ModelEvaluationView: React.FC<ModelEvaluationViewProps> = ({
     )
   }
 
-  const { holdout, candidates, selection, permutation_importance } = evaluation
+  const { holdout, candidates, baseline_comparison, selection, permutation_importance } = evaluation
   const ci = holdout.confidence_intervals
   const atThresh = holdout.at_decision_threshold
   const cm = atThresh.confusion_matrix
+
+  const sortedRocPoints = [...(holdout.curves.roc || [])].sort((a, b) => a.fpr - b.fpr)
 
   return (
     <div className="space-y-6">
@@ -113,6 +115,113 @@ export const ModelEvaluationView: React.FC<ModelEvaluationViewProps> = ({
         />
       </div>
 
+      {baseline_comparison && (
+        <div className="bg-panel rounded-lg border border-border p-5 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-border pb-3">
+            <div>
+              <h3 className="text-sm font-semibold text-ink">
+                Production Model vs. Dummy Classifier (Stratified) Baseline
+              </h3>
+              <p className="text-xs text-ink-muted mt-0.5">
+                Direct holdout benchmark comparing the production {baseline_comparison.production.label} pipeline against a stratified random baseline.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div className="p-3.5 rounded-lg border border-border bg-canvas space-y-2">
+              <span className="text-ink-muted uppercase font-semibold tracking-wider text-[10px]">
+                ROC-AUC Benchmark
+              </span>
+              <div className="flex items-baseline justify-between">
+                <div>
+                  <span className="text-ink-muted block text-[11px]">
+                    {baseline_comparison.baseline.label}
+                  </span>
+                  <span className="font-mono text-base font-semibold text-ink-muted">
+                    {baseline_comparison.baseline.roc_auc.toFixed(4)}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-ink font-semibold block text-[11px]">
+                    {baseline_comparison.production.label}
+                  </span>
+                  <span className="font-mono text-lg font-bold text-ink">
+                    {baseline_comparison.production.roc_auc.toFixed(4)}
+                  </span>
+                </div>
+              </div>
+              <div className="pt-1.5 border-t border-border flex justify-between text-[11px]">
+                <span className="text-ink-muted">Net Model Lift:</span>
+                <span className="font-mono font-bold text-emerald-700">
+                  +{baseline_comparison.lift.roc_auc_delta.toFixed(4)}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-lg border border-border bg-canvas space-y-2">
+              <span className="text-ink-muted uppercase font-semibold tracking-wider text-[10px]">
+                PR-AUC Benchmark
+              </span>
+              <div className="flex items-baseline justify-between">
+                <div>
+                  <span className="text-ink-muted block text-[11px]">
+                    {baseline_comparison.baseline.label}
+                  </span>
+                  <span className="font-mono text-base font-semibold text-ink-muted">
+                    {baseline_comparison.baseline.pr_auc.toFixed(4)}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-ink font-semibold block text-[11px]">
+                    {baseline_comparison.production.label}
+                  </span>
+                  <span className="font-mono text-lg font-bold text-ink">
+                    {baseline_comparison.production.pr_auc.toFixed(4)}
+                  </span>
+                </div>
+              </div>
+              <div className="pt-1.5 border-t border-border flex justify-between text-[11px]">
+                <span className="text-ink-muted">Net Model Lift:</span>
+                <span className="font-mono font-bold text-emerald-700">
+                  +{baseline_comparison.lift.pr_auc_delta.toFixed(4)}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-lg border border-border bg-canvas space-y-2">
+              <span className="text-ink-muted uppercase font-semibold tracking-wider text-[10px]">
+                F1 Score Benchmark
+              </span>
+              <div className="flex items-baseline justify-between">
+                <div>
+                  <span className="text-ink-muted block text-[11px]">
+                    {baseline_comparison.baseline.label}
+                  </span>
+                  <span className="font-mono text-base font-semibold text-ink-muted">
+                    {baseline_comparison.baseline.f1.toFixed(4)}
+                  </span>
+                </div>
+                <div className="text-right">
+                  <span className="text-ink font-semibold block text-[11px]">
+                    {baseline_comparison.production.label}
+                  </span>
+                  <span className="font-mono text-lg font-bold text-ink">
+                    {baseline_comparison.production.f1.toFixed(4)}
+                  </span>
+                </div>
+              </div>
+              <div className="pt-1.5 border-t border-border flex justify-between text-[11px]">
+                <span className="text-ink-muted">Net Model Lift:</span>
+                <span className="font-mono font-bold text-emerald-700">
+                  +{baseline_comparison.lift.f1_delta.toFixed(4)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-panel rounded-lg border border-border p-5 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border pb-3">
           <div className="flex items-center gap-2">
@@ -148,165 +257,370 @@ export const ModelEvaluationView: React.FC<ModelEvaluationViewProps> = ({
         <div className="h-80 w-full pt-2">
           {selectedChart === 'roc' && (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={holdout.curves.roc} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
+              <LineChart data={sortedRocPoints} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E3DDD4" />
                 <XAxis
                   dataKey="fpr"
-                  label={{ value: 'False Positive Rate (1 - Specificity)', position: 'insideBottom', offset: -10, fontSize: 11 }}
+                  type="number"
+                  domain={[0, 1]}
+                  label={{
+                    value: 'False Positive Rate (1 - Specificity)',
+                    position: 'insideBottom',
+                    offset: -10,
+                    fontSize: 11,
+                  }}
                   fontSize={11}
                   stroke="#8D99A6"
-                  domain={[0, 1]}
-                  tickFormatter={(v) => v.toFixed(1)}
+                  tickFormatter={(v) => Number(v).toFixed(1)}
                 />
                 <YAxis
-                  label={{ value: 'True Positive Rate (Recall)', angle: -90, position: 'insideLeft', fontSize: 11 }}
+                  dataKey="tpr"
+                  type="number"
+                  domain={[0, 1]}
+                  label={{
+                    value: 'True Positive Rate (Recall)',
+                    angle: -90,
+                    position: 'insideLeft',
+                    fontSize: 11,
+                  }}
                   fontSize={11}
                   stroke="#8D99A6"
-                  domain={[0, 1]}
-                  tickFormatter={(v) => v.toFixed(1)}
+                  tickFormatter={(v) => Number(v).toFixed(1)}
                 />
                 <Tooltip
-                  formatter={(val: unknown) => [Number(val || 0).toFixed(4), 'Rate']}
+                  formatter={(val: unknown) => [Number(val || 0).toFixed(4), 'True Positive Rate']}
                   labelFormatter={(lbl) => `FPR: ${Number(lbl).toFixed(4)}`}
-                  contentStyle={{ backgroundColor: '#1B242D', borderRadius: '6px', border: 'none', color: '#F8F6F0', fontSize: '12px' }}
+                  contentStyle={{
+                    backgroundColor: '#1B242D',
+                    borderRadius: '6px',
+                    border: 'none',
+                    color: '#F8F6F0',
+                    fontSize: '12px',
+                  }}
                 />
-                <Line type="monotone" dataKey="tpr" stroke="#D65A31" strokeWidth={2.5} dot={false} name="ROC Curve" />
+                <ReferenceLine
+                  segment={[
+                    { x: 0, y: 0 },
+                    { x: 1, y: 1 },
+                  ]}
+                  stroke="#8D99A6"
+                  strokeDasharray="4 4"
+                  label={{
+                    value: 'Random Classifier (0.50)',
+                    position: 'insideBottomRight',
+                    fontSize: 11,
+                    fill: '#5B6875',
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="tpr"
+                  stroke="#D65A31"
+                  strokeWidth={2.5}
+                  dot={false}
+                  name="ROC Curve"
+                />
               </LineChart>
             </ResponsiveContainer>
           )}
 
           {selectedChart === 'pr' && (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={holdout.curves.precision_recall} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
+              <LineChart
+                data={holdout.curves.precision_recall}
+                margin={{ top: 10, right: 20, left: 0, bottom: 20 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#E3DDD4" />
                 <XAxis
                   dataKey="recall"
+                  type="number"
+                  domain={[0, 1]}
                   label={{ value: 'Recall', position: 'insideBottom', offset: -10, fontSize: 11 }}
                   fontSize={11}
                   stroke="#8D99A6"
-                  domain={[0, 1]}
-                  tickFormatter={(v) => v.toFixed(1)}
+                  tickFormatter={(v) => Number(v).toFixed(1)}
                 />
                 <YAxis
+                  dataKey="precision"
+                  type="number"
+                  domain={[0, 1]}
                   label={{ value: 'Precision', angle: -90, position: 'insideLeft', fontSize: 11 }}
                   fontSize={11}
                   stroke="#8D99A6"
-                  domain={[0, 1]}
-                  tickFormatter={(v) => v.toFixed(1)}
+                  tickFormatter={(v) => Number(v).toFixed(1)}
                 />
                 <Tooltip
                   formatter={(val: unknown) => [Number(val || 0).toFixed(4), 'Rate']}
                   labelFormatter={(lbl) => `Recall: ${Number(lbl).toFixed(4)}`}
-                  contentStyle={{ backgroundColor: '#1B242D', borderRadius: '6px', border: 'none', color: '#F8F6F0', fontSize: '12px' }}
+                  contentStyle={{
+                    backgroundColor: '#1B242D',
+                    borderRadius: '6px',
+                    border: 'none',
+                    color: '#F8F6F0',
+                    fontSize: '12px',
+                  }}
                 />
-                <ReferenceLine y={holdout.ranking.base_rate} stroke="#8D99A6" strokeDasharray="4 4" label="Base Rate" />
-                <Line type="monotone" dataKey="precision" stroke="#BF4820" strokeWidth={2.5} dot={false} name="PR Curve" />
+                <ReferenceLine
+                  y={holdout.ranking.base_rate}
+                  stroke="#8D99A6"
+                  strokeDasharray="4 4"
+                  label="Base Rate"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="precision"
+                  stroke="#BF4820"
+                  strokeWidth={2.5}
+                  dot={false}
+                  name="PR Curve"
+                />
               </LineChart>
             </ResponsiveContainer>
           )}
 
           {selectedChart === 'threshold' && (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={holdout.curves.threshold_sweep} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
+              <LineChart
+                data={holdout.curves.threshold_sweep}
+                margin={{ top: 10, right: 20, left: 0, bottom: 20 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#E3DDD4" />
                 <XAxis
                   dataKey="threshold"
-                  label={{ value: 'Decision Threshold', position: 'insideBottom', offset: -10, fontSize: 11 }}
+                  type="number"
+                  domain={[0, 1]}
+                  label={{
+                    value: 'Decision Threshold',
+                    position: 'insideBottom',
+                    offset: -10,
+                    fontSize: 11,
+                  }}
                   fontSize={11}
                   stroke="#8D99A6"
-                  domain={[0, 1]}
-                  tickFormatter={(v) => v.toFixed(1)}
+                  tickFormatter={(v) => Number(v).toFixed(1)}
                 />
-                <YAxis fontSize={11} stroke="#8D99A6" domain={[0, 1]} tickFormatter={(v) => v.toFixed(1)} />
+                <YAxis
+                  type="number"
+                  domain={[0, 1]}
+                  fontSize={11}
+                  stroke="#8D99A6"
+                  tickFormatter={(v) => Number(v).toFixed(1)}
+                />
                 <Tooltip
                   formatter={(val: unknown) => [Number(val || 0).toFixed(3), 'Score']}
                   labelFormatter={(lbl) => `Threshold: ${Number(lbl).toFixed(2)}`}
-                  contentStyle={{ backgroundColor: '#1B242D', borderRadius: '6px', border: 'none', color: '#F8F6F0', fontSize: '12px' }}
+                  contentStyle={{
+                    backgroundColor: '#1B242D',
+                    borderRadius: '6px',
+                    border: 'none',
+                    color: '#F8F6F0',
+                    fontSize: '12px',
+                  }}
                 />
                 <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '12px' }} />
-                <ReferenceLine x={atThresh.threshold} stroke="#1B242D" strokeDasharray="3 3" label="Optimal Cutoff" />
-                <Line type="monotone" dataKey="precision" stroke="#D97706" strokeWidth={2} dot={false} name="Precision" />
-                <Line type="monotone" dataKey="recall" stroke="#15803D" strokeWidth={2} dot={false} name="Recall" />
-                <Line type="monotone" dataKey="f1" stroke="#D65A31" strokeWidth={2.5} dot={false} name="F1 Score" />
+                <ReferenceLine
+                  x={atThresh.threshold}
+                  stroke="#1B242D"
+                  strokeDasharray="3 3"
+                  label="Optimal Cutoff"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="precision"
+                  stroke="#D97706"
+                  strokeWidth={2}
+                  dot={false}
+                  name="Precision"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="recall"
+                  stroke="#15803D"
+                  strokeWidth={2}
+                  dot={false}
+                  name="Recall"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="f1"
+                  stroke="#D65A31"
+                  strokeWidth={2.5}
+                  dot={false}
+                  name="F1 Score"
+                />
               </LineChart>
             </ResponsiveContainer>
           )}
 
           {selectedChart === 'calibration' && (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={holdout.curves.calibration} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
+              <LineChart
+                data={holdout.curves.calibration}
+                margin={{ top: 10, right: 20, left: 0, bottom: 20 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#E3DDD4" />
                 <XAxis
                   dataKey="predicted"
-                  label={{ value: 'Mean Predicted Churn Probability', position: 'insideBottom', offset: -10, fontSize: 11 }}
+                  type="number"
+                  domain={[0, 1]}
+                  label={{
+                    value: 'Mean Predicted Churn Probability',
+                    position: 'insideBottom',
+                    offset: -10,
+                    fontSize: 11,
+                  }}
                   fontSize={11}
                   stroke="#8D99A6"
-                  domain={[0, 1]}
-                  tickFormatter={(v) => v.toFixed(1)}
+                  tickFormatter={(v) => Number(v).toFixed(1)}
                 />
                 <YAxis
-                  label={{ value: 'Empirical Churn Fraction', angle: -90, position: 'insideLeft', fontSize: 11 }}
+                  dataKey="observed"
+                  type="number"
+                  domain={[0, 1]}
+                  label={{
+                    value: 'Empirical Churn Fraction',
+                    angle: -90,
+                    position: 'insideLeft',
+                    fontSize: 11,
+                  }}
                   fontSize={11}
                   stroke="#8D99A6"
-                  domain={[0, 1]}
-                  tickFormatter={(v) => v.toFixed(1)}
+                  tickFormatter={(v) => Number(v).toFixed(1)}
                 />
                 <Tooltip
                   formatter={(val: unknown) => [Number(val || 0).toFixed(3), 'Rate']}
                   labelFormatter={(lbl) => `Predicted: ${Number(lbl).toFixed(3)}`}
-                  contentStyle={{ backgroundColor: '#1B242D', borderRadius: '6px', border: 'none', color: '#F8F6F0', fontSize: '12px' }}
+                  contentStyle={{
+                    backgroundColor: '#1B242D',
+                    borderRadius: '6px',
+                    border: 'none',
+                    color: '#F8F6F0',
+                    fontSize: '12px',
+                  }}
                 />
-                <Line type="monotone" dataKey="observed" stroke="#D65A31" strokeWidth={2.5} dot={{ r: 4 }} name="Observed Rate" />
+                <ReferenceLine
+                  segment={[
+                    { x: 0, y: 0 },
+                    { x: 1, y: 1 },
+                  ]}
+                  stroke="#8D99A6"
+                  strokeDasharray="4 4"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="observed"
+                  stroke="#D65A31"
+                  strokeWidth={2.5}
+                  dot={{ r: 4 }}
+                  name="Observed Rate"
+                />
               </LineChart>
             </ResponsiveContainer>
           )}
 
           {selectedChart === 'lift' && (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={holdout.curves.cumulative_gains} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
+              <LineChart
+                data={holdout.curves.cumulative_gains}
+                margin={{ top: 10, right: 20, left: 0, bottom: 20 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#E3DDD4" />
                 <XAxis
                   dataKey="population_share"
-                  label={{ value: 'Fraction of Customer Base Contacted', position: 'insideBottom', offset: -10, fontSize: 11 }}
+                  type="number"
+                  domain={[0, 1]}
+                  label={{
+                    value: 'Fraction of Customer Base Contacted',
+                    position: 'insideBottom',
+                    offset: -10,
+                    fontSize: 11,
+                  }}
                   fontSize={11}
                   stroke="#8D99A6"
-                  domain={[0, 1]}
-                  tickFormatter={(v) => `${(v * 100).toFixed(0)}%`}
+                  tickFormatter={(v) => `${(Number(v) * 100).toFixed(0)}%`}
                 />
                 <YAxis
-                  label={{ value: 'Fraction of Total Churners Captured', angle: -90, position: 'insideLeft', fontSize: 11 }}
+                  dataKey="churners_captured"
+                  type="number"
+                  domain={[0, 1]}
+                  label={{
+                    value: 'Fraction of Total Churners Captured',
+                    angle: -90,
+                    position: 'insideLeft',
+                    fontSize: 11,
+                  }}
                   fontSize={11}
                   stroke="#8D99A6"
-                  domain={[0, 1]}
-                  tickFormatter={(v) => `${(v * 100).toFixed(0)}%`}
+                  tickFormatter={(v) => `${(Number(v) * 100).toFixed(0)}%`}
                 />
                 <Tooltip
-                  formatter={(val: unknown) => [`${(Number(val || 0) * 100).toFixed(1)}%`, 'Captured Churners']}
+                  formatter={(val: unknown) => [
+                    `${(Number(val || 0) * 100).toFixed(1)}%`,
+                    'Captured Churners',
+                  ]}
                   labelFormatter={(lbl) => `Targeting top ${(Number(lbl) * 100).toFixed(0)}%`}
-                  contentStyle={{ backgroundColor: '#1B242D', borderRadius: '6px', border: 'none', color: '#F8F6F0', fontSize: '12px' }}
+                  contentStyle={{
+                    backgroundColor: '#1B242D',
+                    borderRadius: '6px',
+                    border: 'none',
+                    color: '#F8F6F0',
+                    fontSize: '12px',
+                  }}
                 />
-                <Line type="monotone" dataKey="churners_captured" stroke="#15803D" strokeWidth={2.5} dot={{ r: 4 }} name="Gains Curve" />
+                <Line
+                  type="monotone"
+                  dataKey="churners_captured"
+                  stroke="#15803D"
+                  strokeWidth={2.5}
+                  dot={{ r: 4 }}
+                  name="Gains Curve"
+                />
               </LineChart>
             </ResponsiveContainer>
           )}
 
           {selectedChart === 'distribution' && (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={holdout.score_histogram} margin={{ top: 10, right: 20, left: 0, bottom: 20 }}>
+              <AreaChart
+                data={holdout.score_histogram}
+                margin={{ top: 10, right: 20, left: 0, bottom: 20 }}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="#E3DDD4" />
                 <XAxis
                   dataKey="lower"
                   fontSize={11}
                   stroke="#8D99A6"
-                  tickFormatter={(v) => `${(v * 100).toFixed(0)}%`}
+                  tickFormatter={(v) => `${(Number(v) * 100).toFixed(0)}%`}
                 />
                 <YAxis fontSize={11} stroke="#8D99A6" />
                 <Tooltip
-                  contentStyle={{ backgroundColor: '#1B242D', borderRadius: '6px', border: 'none', color: '#F8F6F0', fontSize: '12px' }}
+                  contentStyle={{
+                    backgroundColor: '#1B242D',
+                    borderRadius: '6px',
+                    border: 'none',
+                    color: '#F8F6F0',
+                    fontSize: '12px',
+                  }}
                 />
                 <Legend verticalAlign="top" height={36} wrapperStyle={{ fontSize: '12px' }} />
-                <Area type="monotone" dataKey="retained" stackId="1" stroke="#15803D" fill="#15803D" fillOpacity={0.4} name="Retained Customers" />
-                <Area type="monotone" dataKey="churned" stackId="1" stroke="#DC2626" fill="#DC2626" fillOpacity={0.6} name="Churned Customers" />
+                <Area
+                  type="monotone"
+                  dataKey="retained"
+                  stackId="1"
+                  stroke="#15803D"
+                  fill="#15803D"
+                  fillOpacity={0.4}
+                  name="Retained Customers"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="churned"
+                  stackId="1"
+                  stroke="#DC2626"
+                  fill="#DC2626"
+                  fillOpacity={0.6}
+                  name="Churned Customers"
+                />
               </AreaChart>
             </ResponsiveContainer>
           )}
@@ -328,9 +642,10 @@ export const ModelEvaluationView: React.FC<ModelEvaluationViewProps> = ({
                 <tr>
                   <th className="py-2.5 px-3 font-semibold text-ink">Candidate Architecture</th>
                   <th className="py-2.5 px-3 font-semibold text-ink">Role</th>
-                  <th className="py-2.5 px-3 font-semibold text-ink">CV PR-AUC (5-Fold)</th>
-                  <th className="py-2.5 px-3 font-semibold text-ink">CV Std Err</th>
+                  <th className="py-2.5 px-3 font-semibold text-ink">CV PR-AUC</th>
+                  <th className="py-2.5 px-3 font-semibold text-ink">Test ROC-AUC</th>
                   <th className="py-2.5 px-3 font-semibold text-ink">Test PR-AUC</th>
+                  <th className="py-2.5 px-3 font-semibold text-ink">Test F1</th>
                   <th className="py-2.5 px-3 font-semibold text-ink">Status</th>
                 </tr>
               </thead>
@@ -338,8 +653,9 @@ export const ModelEvaluationView: React.FC<ModelEvaluationViewProps> = ({
                 {candidates.map((cand) => {
                   const isSelected = cand.name === selection.selected
                   const cvPr = cand.cv?.pr_auc?.mean ?? 0
-                  const cvStd = (cand.cv?.pr_auc?.std ?? 0) / Math.sqrt(5)
+                  const testRoc = cand.test?.roc_auc ?? 0
                   const testPr = cand.test?.pr_auc ?? 0
+                  const testF1 = cand.test?.f1 ?? 0
 
                   return (
                     <tr
@@ -349,18 +665,23 @@ export const ModelEvaluationView: React.FC<ModelEvaluationViewProps> = ({
                       <td className="py-2.5 px-3 text-ink">
                         <div>
                           <span className="font-semibold">{cand.label}</span>
-                          <p className="text-[11px] text-ink-muted leading-tight mt-0.5">{cand.description}</p>
+                          <p className="text-[11px] text-ink-muted leading-tight mt-0.5">
+                            {cand.description}
+                          </p>
                         </div>
                       </td>
                       <td className="py-2.5 px-3 text-ink-muted capitalize">{cand.role}</td>
                       <td className="py-2.5 px-3 font-mono text-ink">
                         {cvPr ? cvPr.toFixed(4) : '—'}
                       </td>
-                      <td className="py-2.5 px-3 font-mono text-ink-muted">
-                        {cvStd ? `±${cvStd.toFixed(4)}` : '—'}
+                      <td className="py-2.5 px-3 font-mono text-ink">
+                        {testRoc ? testRoc.toFixed(4) : '—'}
                       </td>
                       <td className="py-2.5 px-3 font-mono text-ink">
                         {testPr ? testPr.toFixed(4) : '—'}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-ink">
+                        {testF1 ? testF1.toFixed(4) : '0.0000'}
                       </td>
                       <td className="py-2.5 px-3">
                         {isSelected ? (
@@ -398,22 +719,30 @@ export const ModelEvaluationView: React.FC<ModelEvaluationViewProps> = ({
             <div className="mt-4 grid grid-cols-2 gap-3 text-center">
               <div className="p-3 rounded border border-emerald-200 bg-emerald-50/50">
                 <span className="text-[11px] text-emerald-800 uppercase font-semibold">True Negative</span>
-                <p className="text-xl font-bold font-mono text-emerald-900 mt-1">{cm.tn.toLocaleString()}</p>
+                <p className="text-xl font-bold font-mono text-emerald-900 mt-1">
+                  {cm.tn.toLocaleString()}
+                </p>
                 <span className="text-[10px] text-ink-muted">Retained identified</span>
               </div>
               <div className="p-3 rounded border border-amber-200 bg-amber-50/50">
                 <span className="text-[11px] text-amber-800 uppercase font-semibold">False Positive</span>
-                <p className="text-xl font-bold font-mono text-amber-900 mt-1">{cm.fp.toLocaleString()}</p>
+                <p className="text-xl font-bold font-mono text-amber-900 mt-1">
+                  {cm.fp.toLocaleString()}
+                </p>
                 <span className="text-[10px] text-ink-muted">False alarm</span>
               </div>
               <div className="p-3 rounded border border-red-200 bg-red-50/50">
                 <span className="text-[11px] text-red-800 uppercase font-semibold">False Negative</span>
-                <p className="text-xl font-bold font-mono text-red-900 mt-1">{cm.fn.toLocaleString()}</p>
+                <p className="text-xl font-bold font-mono text-red-900 mt-1">
+                  {cm.fn.toLocaleString()}
+                </p>
                 <span className="text-[10px] text-ink-muted">Missed churners</span>
               </div>
               <div className="p-3 rounded border border-emerald-200 bg-emerald-50/50">
                 <span className="text-[11px] text-emerald-800 uppercase font-semibold">True Positive</span>
-                <p className="text-xl font-bold font-mono text-emerald-900 mt-1">{cm.tp.toLocaleString()}</p>
+                <p className="text-xl font-bold font-mono text-emerald-900 mt-1">
+                  {cm.tp.toLocaleString()}
+                </p>
                 <span className="text-[10px] text-ink-muted">Caught churners</span>
               </div>
             </div>
@@ -421,15 +750,21 @@ export const ModelEvaluationView: React.FC<ModelEvaluationViewProps> = ({
             <div className="mt-4 pt-3 border-t border-border space-y-2 text-xs">
               <div className="flex justify-between">
                 <span className="text-ink-muted">Holdout Accuracy:</span>
-                <span className="font-mono font-semibold text-ink">{(atThresh.accuracy * 100).toFixed(1)}%</span>
+                <span className="font-mono font-semibold text-ink">
+                  {(atThresh.accuracy * 100).toFixed(1)}%
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-ink-muted">Holdout Specificity:</span>
-                <span className="font-mono font-semibold text-ink">{(atThresh.specificity * 100).toFixed(1)}%</span>
+                <span className="font-mono font-semibold text-ink">
+                  {(atThresh.specificity * 100).toFixed(1)}%
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-ink-muted">Holdout Flagged Rate:</span>
-                <span className="font-mono font-semibold text-ink">{(atThresh.flagged_rate * 100).toFixed(1)}%</span>
+                <span className="font-mono font-semibold text-ink">
+                  {(atThresh.flagged_rate * 100).toFixed(1)}%
+                </span>
               </div>
             </div>
           </div>
@@ -444,10 +779,14 @@ export const ModelEvaluationView: React.FC<ModelEvaluationViewProps> = ({
               <h3 className="text-sm font-semibold text-ink">Permutation Feature Importance</h3>
             </div>
             <p className="text-xs text-ink-muted mt-0.5">
-              Evaluated on the test split using Average Precision score loss across {permutation_importance.repeats} shuffles.
+              Evaluated on the test split using Average Precision score loss across{' '}
+              {permutation_importance.repeats} shuffles.
             </p>
           </div>
-          <span className="text-xs text-ink-muted flex items-center gap-1" title="Permutation importance measures how model predictive power drops when a feature is shuffled. It does not prove direct real-world causal impact.">
+          <span
+            className="text-xs text-ink-muted flex items-center gap-1"
+            title="Permutation importance measures how model predictive power drops when a feature is shuffled. It does not prove direct real-world causal impact."
+          >
             <HelpCircle className="w-3.5 h-3.5" />
             Predictive Association Only
           </span>
@@ -461,11 +800,22 @@ export const ModelEvaluationView: React.FC<ModelEvaluationViewProps> = ({
               margin={{ top: 10, right: 30, left: 100, bottom: 10 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#E3DDD4" horizontal={false} />
-              <XAxis type="number" fontSize={11} stroke="#8D99A6" tickFormatter={(v) => v.toFixed(3)} />
+              <XAxis
+                type="number"
+                fontSize={11}
+                stroke="#8D99A6"
+                tickFormatter={(v) => Number(v).toFixed(3)}
+              />
               <YAxis type="category" dataKey="label" fontSize={11} stroke="#1B242D" width={95} />
               <Tooltip
                 formatter={(val: unknown) => [Number(val || 0).toFixed(4), 'Mean Drop in PR-AUC']}
-                contentStyle={{ backgroundColor: '#1B242D', borderRadius: '6px', border: 'none', color: '#F8F6F0', fontSize: '12px' }}
+                contentStyle={{
+                  backgroundColor: '#1B242D',
+                  borderRadius: '6px',
+                  border: 'none',
+                  color: '#F8F6F0',
+                  fontSize: '12px',
+                }}
               />
               <Bar dataKey="importance_mean" fill="#D65A31" radius={[0, 4, 4, 0]} />
             </BarChart>

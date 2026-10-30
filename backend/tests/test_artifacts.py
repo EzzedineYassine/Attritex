@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from churnsense.ml.artifacts import (
+from attritex.ml.artifacts import (
     ArtifactLoadError,
     ArtifactNotFoundError,
     load_bundle,

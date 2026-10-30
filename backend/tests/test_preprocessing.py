@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
-from churnsense.data.schema import model_feature_names
-from churnsense.ml.preprocessing import (
+from attritex.data.schema import model_feature_names
+from attritex.ml.preprocessing import (
     TotalChargesImputer,
     build_column_transformer,
     build_model_pipeline,
@@ -24,6 +24,18 @@ def test_total_charges_imputer_derives_value_when_missing():
     transformed = imputer.transform(df)
     assert transformed["TotalCharges"].iloc[0] == 200.0
     assert transformed["TotalCharges"].iloc[1] == 200.0
+
+
+def test_total_charges_imputer_zero_tenure_imputation():
+    imputer = TotalChargesImputer()
+    df = pd.DataFrame({
+        "tenure": [0.0],
+        "MonthlyCharges": [65.0],
+        "TotalCharges": [np.nan],
+    })
+    imputer.fit(df)
+    transformed = imputer.transform(df)
+    assert transformed["TotalCharges"].iloc[0] == 0.0
 
 
 def test_column_transformer_encodes_numeric_and_categorical():

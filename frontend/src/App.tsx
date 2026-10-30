@@ -35,7 +35,7 @@ export const App: React.FC = () => {
       if (err instanceof Error) {
         setFetchError(err.message)
       } else {
-        setFetchError('Failed to communicate with ChurnSense prediction service.')
+        setFetchError('Failed to communicate with Attritex prediction service.')
       }
     } finally {
       setLoading(false)
@@ -61,7 +61,7 @@ export const App: React.FC = () => {
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
               <span>
-                Backend server is unreachable ({fetchError}). Ensure `uv run churnsense serve` is running on port 8000.
+                Backend server is unreachable ({fetchError}). Ensure `uv run attritex serve` is running on port 8000.
               </span>
             </div>
             <button
@@ -79,7 +79,7 @@ export const App: React.FC = () => {
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
               <span>
-                Model artifacts not found. Run `uv run churnsense train` to train and register the classifier.
+                Model artifacts not found. Run `uv run attritex train` to train and register the classifier.
               </span>
             </div>
             <button
@@ -95,7 +95,7 @@ export const App: React.FC = () => {
         {loading && !modelInfo ? (
           <div className="p-16 flex flex-col items-center justify-center text-center">
             <div className="w-8 h-8 border-2 border-terracotta-600 border-t-transparent rounded-full animate-spin mb-3" />
-            <p className="text-sm font-medium text-ink">Initializing ChurnSense Intelligence System...</p>
+            <p className="text-sm font-medium text-ink">Initializing Attritex Intelligence System...</p>
             <p className="text-xs text-ink-muted mt-1">Connecting to FastAPI prediction pipeline</p>
           </div>
         ) : (
@@ -120,7 +120,7 @@ export const App: React.FC = () => {
       <footer className="border-t border-border bg-panel py-6 mt-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-ink-muted gap-3">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-ink">ChurnSense</span>
+            <span className="font-semibold text-ink">Attritex</span>
             <span>&middot;</span>
             <span>Customer Retention & Risk Analytics</span>
           </div>

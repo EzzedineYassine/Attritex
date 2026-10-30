@@ -9,15 +9,15 @@ from fastapi import APIRouter, Depends, File, Query, UploadFile
 from fastapi.responses import Response
 from starlette.concurrency import run_in_threadpool
 
-from churnsense.api.dependencies import get_bundle, get_settings
-from churnsense.api.errors import ApiError
-from churnsense.api.schemas import BatchPredictionResponse, CustomerRecord, PredictionResponse
-from churnsense.config import Settings
-from churnsense.data.fixture import generate_synthetic_customers
-from churnsense.data.schema import ID_COLUMN, TARGET_COLUMN, model_feature_names
-from churnsense.data.validation import require_columns
-from churnsense.ml.artifacts import ModelBundle
-from churnsense.ml.inference import score_batch, score_customer
+from attritex.api.dependencies import get_bundle, get_settings
+from attritex.api.errors import ApiError
+from attritex.api.schemas import BatchPredictionResponse, CustomerRecord, PredictionResponse
+from attritex.config import Settings
+from attritex.data.fixture import generate_synthetic_customers
+from attritex.data.schema import ID_COLUMN, TARGET_COLUMN, model_feature_names
+from attritex.data.validation import require_columns
+from attritex.ml.artifacts import ModelBundle
+from attritex.ml.inference import score_batch, score_customer
 
 router = APIRouter(prefix="/api/predict", tags=["predictions"])
 
@@ -124,5 +124,5 @@ def batch_template() -> Response:
     return Response(
         content=sample.to_csv(index=False),
         media_type="text/csv",
-        headers={"Content-Disposition": 'attachment; filename="churnsense_batch_template.csv"'},
+        headers={"Content-Disposition": 'attachment; filename="attritex_batch_template.csv"'},
     )

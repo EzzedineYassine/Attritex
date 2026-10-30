@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from fastapi import Request
 
-from churnsense.api.registry import ModelRegistry
-from churnsense.config import Settings
-from churnsense.ml.artifacts import ModelBundle
+from attritex.api.registry import ModelRegistry
+from attritex.config import Settings
+from attritex.ml.artifacts import ModelBundle
 
 
 def get_registry(request: Request) -> ModelRegistry:

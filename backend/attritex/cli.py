@@ -6,13 +6,13 @@ import logging
 import sys
 from pathlib import Path
 
-from churnsense.config import load_settings
-from churnsense.data.fixture import write_synthetic_fixture
-from churnsense.data.loading import DataLoadError, download_telco_dataset
-from churnsense.ml.artifacts import ArtifactLoadError, ArtifactNotFoundError, load_bundle
-from churnsense.ml.training import TrainingConfig, TrainingDataError, train_from_file
+from attritex.config import load_settings
+from attritex.data.fixture import write_synthetic_fixture
+from attritex.data.loading import DataLoadError, download_telco_dataset
+from attritex.ml.artifacts import ArtifactLoadError, ArtifactNotFoundError, load_bundle
+from attritex.ml.training import TrainingConfig, TrainingDataError, train_from_file
 
-logger = logging.getLogger("churnsense")
+logger = logging.getLogger("attritex")
 
 
 def _download(args: argparse.Namespace) -> int:
@@ -88,13 +88,13 @@ def _info(args: argparse.Namespace) -> int:
 def _serve(args: argparse.Namespace) -> int:
     import uvicorn
 
-    uvicorn.run("churnsense.api.app:create_app", factory=True, host=args.host, port=args.port,
+    uvicorn.run("attritex.api.app:create_app", factory=True, host=args.host, port=args.port,
                 reload=args.reload)
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="churnsense", description="ChurnSense command line")
+    parser = argparse.ArgumentParser(prog="attritex", description="Attritex command line")
     commands = parser.add_subparsers(dest="command", required=True)
 
     data = commands.add_parser("data", help="Obtain training data").add_subparsers(

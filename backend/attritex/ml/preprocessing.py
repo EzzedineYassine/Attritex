@@ -8,7 +8,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
-from churnsense.data.schema import categorical_feature_names, numeric_feature_names
+from attritex.data.schema import categorical_feature_names, numeric_feature_names
 
 
 class TotalChargesImputer(BaseEstimator, TransformerMixin):

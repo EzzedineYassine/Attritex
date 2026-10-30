@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from churnsense.ml.thresholds import (
+from attritex.ml.thresholds import (
     TierCutoffs,
     assign_risk_tiers,
     derive_tier_cutoffs,
